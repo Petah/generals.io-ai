@@ -1,0 +1,15 @@
+{
+  "name": "ai-generals.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "repository": {},
+  "dependencies": {
+    "socket.io-client": "^1.7.2"
+  }
+}
