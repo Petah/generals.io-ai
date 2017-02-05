@@ -145,7 +145,7 @@
                     }).then(function(response) {
                         // console.log('end', name);
                         ai.state = response.data;
-                        // $scope.ai3 = combineState($scope.ai3, [$scope.ai0, $scope.ai1, $scope.ai2]);
+                        $scope.ai3 = combineState($scope.ai3, [$scope.ai0, $scope.ai1, $scope.ai2]);
                         queue.push({
                             ai: ai,
                             name: name,
@@ -157,8 +157,8 @@
                 $scope.ai2 = {};
                 $scope.ai3 = {};
                 updateAi($scope.ai0, 'ai_0');
-                // updateAi($scope.ai1, 'ai_1');
-                // updateAi($scope.ai2, 'ai_2');
+                updateAi($scope.ai1, 'ai_1');
+                updateAi($scope.ai2, 'ai_2');
                 $interval(function() {
                     // console.log(queue.length);
                     if (queue.length) {
@@ -167,6 +167,22 @@
                     }
                     // console.log(queue.length);
                 }, 300);
+            });
+            app.filter('reverse', function() {
+                return function(items) {
+                    if (items) {
+                        return items.slice().reverse();
+                    }
+                    return items;
+                };
+            });
+            app.filter('join', function() {
+                return function(items) {
+                    if (items) {
+                        return items.join(' ');
+                    }
+                    return items;
+                };
             });
             app.directive('zxAi', function() {
                 return {
@@ -199,10 +215,15 @@
                         <div class="zx-overlay">
                             <div>Turn {{ ai.state.turn }}</div>
                             <div ng-repeat="score in ai.state.scores">{{ score.tiles }} {{ score.total }} {{ ai.state.usernames[$index] }}</div>
+                            <div ng-repeat="log in formatLog(ai.state.log) track by $index">{{ log }}</div>
                         </div>
                     `,
                     link: function(scope, element, attributes) {
-
+                        scope.formatLog = (log) => {
+                            if (log) {
+                                return log.slice().reverse().map(line => line.join(' '));
+                            }
+                        };
                     },
                 };
             });

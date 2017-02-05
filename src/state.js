@@ -13,6 +13,7 @@ class State {
         this.generals = null;
         this.cities = [];
         this.map = [];
+        this.log = [];
     }
 
     update(data) {
@@ -55,14 +56,11 @@ class State {
             this.rows.push(row);
         }
 
-        fs.writeFile(__dirname + '/../data/' + this.ai.name + '.json', JSON.stringify({
-            turn: this.turn,
-            scores: this.scores,
-            usernames: this.usernames,
-            stars: this.stars,
-            width: this.width,
-            height: this.height,
-            rows: this.rows,
+        fs.writeFile(__dirname + '/../data/' + this.ai.name + '.json', JSON.stringify(this, (key, value) => {
+            if (key === 'ai') {
+                return undefined;
+            }
+            return value;
         }), () => {});
     }
 
@@ -88,18 +86,6 @@ class State {
             }
         }
         return null;
-    }
-
-    findBiggestCell() {
-        var biggest = null;
-        for (var i = 0; i < this.size; i++) {
-            if (this.terrain[i] === this.ai.playerIndex && this.armies[i] > 1) {
-                if (biggest === null || this.armies[biggest] < this.armies[i]) {
-                    biggest = i;
-                }
-            }
-        }
-        return biggest;
     }
 
     getCellUp(i) {

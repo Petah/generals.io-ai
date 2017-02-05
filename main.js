@@ -2,7 +2,7 @@ const Ai = require('./src/ai');
 const Match = require('./src/match');
 
 let match = new Match('daves_test_game');
-let aiCount = 1;
+let aiCount = 3;
 let ais = [];
 
 for (let i = 0; i < aiCount; i++) {
@@ -11,11 +11,11 @@ for (let i = 0; i < aiCount; i++) {
     ais.push(ai);
 }
 
-// setTimeout(() => {
-//     for (let i = 0; i < aiCount; i++) {
-//         ais[i].forceStart(match);
-//     }
-// }, 3000);
+setTimeout(() => {
+    for (let i = 0; i < aiCount; i++) {
+        ais[i].forceStart(match);
+    }
+}, 3000);
 
 const stdin = process.stdin;
 stdin.setRawMode(true);
