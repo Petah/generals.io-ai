@@ -1,6 +1,8 @@
 const io = require('socket.io-client');
 const State = require('./state');
 const PathFinding = require('./path-finding');
+const fs = require('fs');
+const historyFile = __dirname + '/../data/history.json';
 
 module.exports = class Ai {
     constructor(id, name, mode) {
@@ -10,6 +12,7 @@ module.exports = class Ai {
         this.playerIndex = null;
         this.state = new State(this);
         this.pathFinding = new PathFinding(this);
+        this.finished = false;
     }
 
     joinMatch(match) {
@@ -82,47 +85,49 @@ module.exports = class Ai {
             });
 
             this._socket.on('game_update', (data) => {
+                let ms = new Date().getTime();
                 // this.log('Game update');
                 // Patch the city and map diffs into our local variables.
                 this.state.update(data, this);
                 this.pathFinding.update();
 
                 if (require('./moves/defend-base')(this)) {
-                    this.log('Defend base');
+                    this.log('Defend base ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
-                if (this.state.turn % 2 === 0) {
+                if (require('./moves/skip')(this)) {
+                    this.log('Skip ' + (new Date().getTime() - ms) + 'ms');
+                    return;
+                }
+                if (this.state.turn % 3 === 0) {
                     switch (Math.floor(Math.random() * 2)) {
                         case 0: {
-                            if (require('./moves/move-any-free-cell')(this)) {
-                                this.log('Moved any free cell');
-                                return;
-                            }
-                            break;
-                        }
-                        case 1: {
                             if (require('./moves/move-towards-base')(this)) {
-                                this.log('Moved any free cell');
+                                this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
                                 return;
                             }
                             break;
                         }
                     }
+                    if (require('./moves/move-any-free-cell')(this)) {
+                        this.log('Moved any free cell ' + (new Date().getTime() - ms) + 'ms');
+                        return;
+                    }
                 }
                 if (require('./moves/move-towards-enemy')(this)) {
-                    this.log('Moved towards enemy');
+                    this.log('Moved towards enemy ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
                 if (require('./moves/move-towards-empty')(this)) {
-                    this.log('Moved towards empty');
+                    this.log('Moved towards empty ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
                 if (require('./moves/move-biggest-randomly')(this)) {
-                    this.log('Moved biggest randomly');
+                    this.log('Moved biggest randomly ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
 
-                this.log('No move found.');
+                this.log('No move found ' + (new Date().getTime() - ms) + 'ms');
             });
 
             this._socket.on('chat_message', (chat_room, data) => {
@@ -131,12 +136,33 @@ module.exports = class Ai {
 
             this._socket.on('game_lost', () => {
                 this.log('Game lost ' + this.state.replayUrl);
+                this.log('Reading ' + historyFile);
+                let history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
+                history.push({
+                    date: new Date().getTime(),
+                    won: false,
+                });
+                this.log('Game lost ' + this.state.replayUrl);
+                this.log('Writing ' + historyFile);
+                fs.writeFileSync(historyFile, JSON.stringify(history));
                 this._socket.emit('leave_game');
+                this.finished = true;
             });
 
             this._socket.on('game_won', () => {
                 this.log('Game won ' + this.state.replayUrl);
+                this.log('Game lost ' + this.state.replayUrl);
+                this.log('Reading ' + historyFile);
+                let history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
+                history.push({
+                    date: new Date().getTime(),
+                    won: true,
+                });
+                this.log('Game lost ' + this.state.replayUrl);
+                this.log('Writing ' + historyFile);
+                fs.writeFileSync(historyFile, JSON.stringify(history));
                 this._socket.emit('leave_game');
+                this.finished = true;
             });
         }
     }

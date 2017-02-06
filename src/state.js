@@ -23,6 +23,7 @@ class State {
         this.cities = patch(this.cities, data.cities_diff);
         this.map = patch(this.map, data.map_diff);
         this.generals = data.generals;
+        this.playerIndex = this.ai.playerIndex;
 
         // The first two terms in |map| are the dimensions.
         this.width = this.map[0];
@@ -39,18 +40,26 @@ class State {
         this.terrain = this.map.slice(this.size + 2, this.size + 2 + this.size);
         this.terrainLength = this.terrain.length;
 
+        this.minArmies = 999999;
+        this.maxArmies = 0;
+
         this.rows = [];
         for (var r = 0; r < this.height; r++) {
             var row = [];
             for (var c = 0; c < this.width; c++) {
+                let i = r * this.width + c;
+                if (this.terrain[i] === this.ai.playerIndex) {
+                    this.minArmies = Math.min(this.minArmies, this.armies[i]);
+                    this.maxArmies = Math.max(this.maxArmies, this.armies[i]);
+                }
                 row.push({
-                    i: r * this.width + c,
+                    i: i,
                     x: c,
                     y: r,
-                    terrain: this.terrain[r * this.width + c],
-                    armies: this.armies[r * this.width + c],
-                    cities: this.cities.indexOf(r * this.width + c),
-                    general: this.generals.indexOf(r * this.width + c),
+                    terrain: this.terrain[i],
+                    armies: this.armies[i],
+                    cities: this.cities.indexOf(i),
+                    general: this.generals.indexOf(i),
                 });
             }
             this.rows.push(row);
@@ -67,20 +76,6 @@ class State {
                 }
             }
         }
-    }
-
-    findNextCell() {
-        for (var i = 0; i < this.size; i++) {
-            if (this.terrain[i] === this.ai.playerIndex && this.armies[i] > 1) {
-                if (this.isCellUpTerrain(i, TILE_EMPTY) ||
-                        this.isCellDownTerrain(i, TILE_EMPTY) ||
-                        this.isCellLeftTerrain(i, TILE_EMPTY) ||
-                        this.isCellRightTerrain(i, TILE_EMPTY)) {
-                    return i;
-                }
-            }
-        }
-        return null;
     }
 
     getCell(i) {

@@ -11,13 +11,27 @@ module.exports = function(ai) {
         return false;
     }
     let [closest, distance] = findClosest(ai, ai.state.base.x, ai.state.base.y, (cell) => {
-        return cell.terrain === ai.playerIndex && cell.generals === -1 && cell.armies > (biggestArmy.armies / 4) && cell.armies < ((biggestArmy.armies / 4) * 3);
+        if (cell.i == biggestArmy.i) {
+            return false;
+        }
+        if (cell.terrain === ai.playerIndex && cell.general === -1) {
+            if (cell.armies > 10 && biggestArmy.armies > 20) {
+                return true;
+            }
+            if (cell.armies > 3 && biggestArmy.armies > 10) {
+                return true;
+            }
+            // if (cell.armies > (biggestArmy.armies / 4) && cell.armies < ((biggestArmy.armies / 4) * 3)) {
+            //     return false;
+            // }
+        }
+        return false;
     });
     if (closest) {
         let path = ai.pathFinding.findPath(closest.x, closest.y, ai.state.base.x, ai.state.base.y);
         if (path.length > 1) {
-            ai.log('Collect' + 
-                ' c' + closest.x + ' ' + closest.y + ' ' + 
+            ai.log('Collect' +
+                ' c' + closest.x + ' ' + closest.y + ' ' +
                 ' p' + path[1][0] + ' ' + path[1][1] +
                 ' a' + closest.armies + ' ' + biggestArmy.armies);
             let endIndex = path[1][1] * ai.state.width + path[1][0];
@@ -27,7 +41,8 @@ module.exports = function(ai) {
             ai.log('No path to base ' + closest.x + ' ' + closest.y + ' ' + ai.state.base.x + ' ' + ai.state.base.y);
         }
     } else {
-        ai.log('No closest army to base ' + biggestArmy.armies);
+        ai.log('No closest army to base ' +
+            ' ' + (biggestArmy.armies / 4) + ' to ' + ((biggestArmy.armies / 4) * 3));
     }
     return false;
 }

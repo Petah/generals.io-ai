@@ -2,6 +2,7 @@
 <html ng-app="App">
     <head>
         <title>My AngularJS App</title>
+        <script src="../bower_components/tinycolor/tinycolor.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.js"></script>
         <style>
             * {
@@ -18,7 +19,7 @@
                 height: 100%;
                 font-family: monospace;
             }
-            
+
             body {
                 display: flex;
                 flex-direction: column;
@@ -230,6 +231,8 @@
                                 'zx-cell-color-1': col.terrain == 1,
                                 'zx-cell-color-2': col.terrain == 2,
                                 'zx-cell-color-3': col.terrain == 3,
+                            }" ng-style="{
+                                backgroundColor: getColor(ai, col),
                             }">
                                 <div class="zx-cell-text">
                                     {{ col.terrain == -1 ? '' : '' }}
@@ -244,6 +247,8 @@
                             <div ng-repeat="message in ai.chat">{{ message[1].text }}</div>
                             <div><a href="{{ ai.replayUrl }}" target="_blank">Replay</a></div>
                             <div>Turn {{ ai.turn }}</div>
+                            <div>Min {{ ai.minArmies }}</div>
+                            <div>Max {{ ai.maxArmies }}</div>
                             <div ng-repeat="score in ai.scores">{{ score.tiles }} {{ score.total }} {{ ai.usernames[$index] }}</div>
                             <div ng-repeat="log in formatLog(ai.log) track by $index">{{ log }}</div>
                         </div>
@@ -254,10 +259,29 @@
                                 return log.slice().reverse().map(line => line.join(' '));
                             }
                         };
+
+                        const colors = [
+                            '#3498db',
+                            '#e74c3c',
+                            '#2ecc71',
+                            '#f1c40f',
+                        ];
+
+                        scope.getColor = (ai, col) => {
+                            switch (col.terrain) {
+                                case -4: return '#999';
+                                case -3: return '#aaa';
+                                case -2: return '#444';
+                                case -1: return '#fff';
+                            }
+                            let hex = colors[col.terrain];
+                            let color = tinycolor(hex).toRgb();
+                            let alpha = col.armies / ai.maxArmies;
+                            return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+                        };
                     },
                 };
             });
         </script>
-
     </body>
 </html>
