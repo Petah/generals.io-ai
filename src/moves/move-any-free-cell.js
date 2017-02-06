@@ -16,13 +16,13 @@ module.exports = function(ai) {
                     continue;
                 }
                 if (direction.terrain == State.TILE_EMPTY && direction.cities === -1) {
-                    ai.log('Move next');
+                    ai.debug('Move next');
                     moved = true;
                     ai._socket.emit('attack', cell.i, direction.i);
                     return true;
                 }
                 if (direction.terrain >= 0 && direction.terrain != ai.playerIndex && direction.armies < cell.armies - 1) {
-                    ai.log('Attack next');
+                    ai.debug('Attack next');
                     moved = true;
                     ai._socket.emit('attack', cell.i, direction.i);
                     return true;

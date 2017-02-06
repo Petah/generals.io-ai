@@ -1,4 +1,3 @@
-const fs = require('fs');
 const patch = require('./patch');
 
 const TILE_EMPTY = -1;
@@ -14,6 +13,7 @@ class State {
         this.cities = [];
         this.map = [];
         this.log = [];
+        this.chat = [];
     }
 
     update(data) {
@@ -56,12 +56,7 @@ class State {
             this.rows.push(row);
         }
 
-        fs.writeFile(__dirname + '/../data/' + this.ai.name + '.json', JSON.stringify(this, (key, value) => {
-            if (key === 'ai') {
-                return undefined;
-            }
-            return value;
-        }), () => {});
+        this.base = data.generals && data.generals.length && data.generals[this.ai.playerIndex] >= 0 ? this.getCell(data.generals[this.ai.playerIndex]) : null;
     }
 
     forEachCell(callback) {
@@ -86,6 +81,12 @@ class State {
             }
         }
         return null;
+    }
+
+    getCell(i) {
+        let r = Math.floor(i / this.width);
+        let c = i % this.width;
+        return this.rows[r][c];
     }
 
     getCellUp(i) {

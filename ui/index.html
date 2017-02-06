@@ -4,6 +4,11 @@
         <title>My AngularJS App</title>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.js"></script>
         <style>
+            * {
+
+                box-sizing: border-box;
+            }
+
             html,
             body {
                 display: flex;
@@ -12,6 +17,15 @@
                 width: 100%;
                 height: 100%;
                 font-family: monospace;
+            }
+            
+            body {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .zx-toolbar {
+                text-align: center;
             }
 
             .zx-grid {
@@ -67,10 +81,12 @@
 
             .zx-cell-city {
                 background-color: #8e44ad;
+                box-shadow:inset 0px 0px 0px 2px #8e44ad;
             }
 
             .zx-cell-general {
                 text-decoration: underline;
+                box-shadow:inset 0px 0px 0px 2px #2c3e50;
             }
 
             .zx-cell-color-0 {
@@ -97,15 +113,24 @@
             }
         </style>
     </head>
-    <body>
-        <div ng-controller="AppController" class="zx-grid">
+    <body ng-controller="AppController" ng-cloak>
+        <div class="zx-toolbar">
+            <button ng-click="start()">Start</button>
+            <button ng-click="stop()">Stop</button>
+        </div>
+        <div class="zx-grid" ng-if="ais.length == 1">
             <div class="zx-grid-row">
-                <div zx-ai="ai0" class="zx-ai"></div>
-                <div zx-ai="ai1" class="zx-ai"></div>
+                <div zx-ai="ais[0]" class="zx-ai"></div>
+            </div>
+        </div>
+        <div class="zx-grid" ng-if="ais.length > 1">
+            <div class="zx-grid-row">
+                <div zx-ai="ais[0]" class="zx-ai"></div>
+                <div zx-ai="ais[1]" class="zx-ai"></div>
             </div>
             <div class="zx-grid-row">
-                <div zx-ai="ai2" class="zx-ai"></div>
-                <div zx-ai="ai3" class="zx-ai"></div>
+                <div zx-ai="ais[2]" class="zx-ai"></div>
+                <div zx-ai="ais[3]" class="zx-ai"></div>
             </div>
         </div>
         <script>
@@ -113,19 +138,20 @@
             var queue = [];
             var combineState = function(ai, others) {
                 ai = angular.copy(others[0], {});
+                delete ai.log;
                 for (var i = 1; i < others.length; i++) {
-                    for (var r = 0; r < ai.state.height; r++) {
-                        for (var c = 0; c < ai.state.width; c++) {
-                            if (others[i].state) {
-                                if (others[i].state.rows[r][c].armies > ai.state.rows[r][c].armies) {
-                                    ai.state.rows[r][c].armies = others[i].state.rows[r][c].armies;
-                                    ai.state.rows[r][c].playerIndex = others[i].state.rows[r][c].playerIndex;
-                                    ai.state.rows[r][c].terrain = others[i].state.rows[r][c].terrain;
-                                } else if (ai.state.rows[r][c].terrain < -2 && others[i].state.rows[r][c].terrain >= -2) {
-                                    ai.state.rows[r][c].terrain = others[i].state.rows[r][c].terrain;
+                    for (var r = 0; r < ai.height; r++) {
+                        for (var c = 0; c < ai.width; c++) {
+                            if (others[i] && others[i].replayUrl == ai.replayUrl) {
+                                if (others[i].rows[r][c].armies > ai.rows[r][c].armies) {
+                                    ai.rows[r][c].armies = others[i].rows[r][c].armies;
+                                    ai.rows[r][c].playerIndex = others[i].rows[r][c].playerIndex;
+                                    ai.rows[r][c].terrain = others[i].rows[r][c].terrain;
+                                } else if (ai.rows[r][c].terrain < -2 && others[i].rows[r][c].terrain >= -2) {
+                                    ai.rows[r][c].terrain = others[i].rows[r][c].terrain;
                                 }
-                                if (ai.state.rows[r][c].cities < 0 && others[i].state.rows[r][c].cities >= -1) {
-                                    ai.state.rows[r][c].cities = others[i].state.rows[r][c].cities;
+                                if (ai.rows[r][c].cities < 0 && others[i].rows[r][c].cities >= -1) {
+                                    ai.rows[r][c].cities = others[i].rows[r][c].cities;
                                 }
                             }
                         }
@@ -135,38 +161,40 @@
             };
 
             app.controller('AppController', function($scope, $http, $interval) {
-                var updateAi = function(ai, name) {
-                    // console.log('start', name);
+                let started = true;
+                var updateAi = function() {
                     $http({
-                        url: '../data/' + name + '.json',
+                        url: '../data/ais.json',
                         params: {
                             date: new Date().getTime(),
                         },
                     }).then(function(response) {
-                        // console.log('end', name);
-                        ai.state = response.data;
-                        $scope.ai3 = combineState($scope.ai3, [$scope.ai0, $scope.ai1, $scope.ai2]);
-                        queue.push({
-                            ai: ai,
-                            name: name,
-                        });
+                        $scope.ais = response.data;
+                        if ($scope.ais.length > 1) {
+                            $scope.ais[3] = combineState($scope.ai3, [$scope.ais[0], $scope.ais[1], $scope.ais[2]]);
+                        }
+                        queue.push({});
                     });
                 };
-                $scope.ai0 = {};
-                $scope.ai1 = {};
-                $scope.ai2 = {};
-                $scope.ai3 = {};
-                updateAi($scope.ai0, 'ai_0');
-                updateAi($scope.ai1, 'ai_1');
-                updateAi($scope.ai2, 'ai_2');
+                $scope.ais = [];
+                updateAi();
                 $interval(function() {
-                    // console.log(queue.length);
+                    if (!started) {
+                        return;
+                    }
                     if (queue.length) {
                         var next = queue.shift();
-                        updateAi(next.ai, next.name);
+                        updateAi();
                     }
-                    // console.log(queue.length);
-                }, 300);
+                }, 450);
+
+                $scope.stop = function() {
+                    started = false;
+                };
+
+                $scope.start = function() {
+                    started = true;
+                };
             });
             app.filter('reverse', function() {
                 return function(items) {
@@ -190,7 +218,7 @@
                         ai: '=zxAi',
                     },
                     template: `
-                        <div ng-repeat="row in ai.state.rows" class="zx-row">
+                        <div ng-repeat="row in ai.rows" class="zx-row">
                             <div ng-repeat="col in row track by $index" class="zx-cell" title="{{ col.x }} {{ col.y }}" ng-class="{
                                 'zx-cell-empty': col.terrain == -1,
                                 'zx-cell-mountain': col.terrain == -2,
@@ -213,9 +241,11 @@
                             </div>
                         </div>
                         <div class="zx-overlay">
-                            <div>Turn {{ ai.state.turn }}</div>
-                            <div ng-repeat="score in ai.state.scores">{{ score.tiles }} {{ score.total }} {{ ai.state.usernames[$index] }}</div>
-                            <div ng-repeat="log in formatLog(ai.state.log) track by $index">{{ log }}</div>
+                            <div ng-repeat="message in ai.chat">{{ message[1].text }}</div>
+                            <div><a href="{{ ai.replayUrl }}" target="_blank">Replay</a></div>
+                            <div>Turn {{ ai.turn }}</div>
+                            <div ng-repeat="score in ai.scores">{{ score.tiles }} {{ score.total }} {{ ai.usernames[$index] }}</div>
+                            <div ng-repeat="log in formatLog(ai.log) track by $index">{{ log }}</div>
                         </div>
                     `,
                     link: function(scope, element, attributes) {

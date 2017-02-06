@@ -10,6 +10,7 @@
   "license": "ISC",
   "repository": {},
   "dependencies": {
+    "pathfinding": "^0.4.18",
     "socket.io-client": "^1.7.2"
   }
 }

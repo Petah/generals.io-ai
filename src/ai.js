@@ -1,18 +1,24 @@
 const io = require('socket.io-client');
 const State = require('./state');
-const PF = require('pathfinding');
+const PathFinding = require('./path-finding');
 
 module.exports = class Ai {
-    constructor(id, name) {
+    constructor(id, name, mode) {
         this.id = id;
         this.name = name;
+        this.mode = mode;
         this.playerIndex = null;
         this.state = new State(this);
+        this.pathFinding = new PathFinding(this);
     }
 
     joinMatch(match) {
         this.match = match;
         this.socket;
+    }
+
+    debug() {
+        // this.log.apply(this, arguments);
     }
 
     log(message) {
@@ -47,9 +53,23 @@ module.exports = class Ai {
 
                 // Join a custom game and force start immediately.
                 // Custom games are a great way to test your bot while you develop it because you can play against your bot!
-                this._socket.emit('join_private', this.match.id, this.id);
-	            // this._socket.emit('join_1v1', this.id);
-                this.log('Joined custom game at http://bot.generals.io/games/' + encodeURIComponent(this.match.id));
+                switch (this.mode) {
+                    case 'private': {
+                        this._socket.emit('join_private', this.match.id, this.id);
+                        this.log('Joined custom game at http://bot.generals.io/games/' + encodeURIComponent(this.match.id));
+                        break;
+                    }
+                    case '1v1': {
+                        this._socket.emit('join_1v1', this.id);
+                        this.log('Joined 1v1');
+                        break;
+                    }
+                    case 'ffa': {
+                        this._socket.emit('play', this.id);
+                        this.log('Joined FFA');
+                        break;
+                    }
+                }
             });
 
             this._socket.on('game_start', (data) => {
@@ -58,21 +78,43 @@ module.exports = class Ai {
                 this.state.replayUrl = 'http://bot.generals.io/replays/' + encodeURIComponent(data.replay_id);
                 this.state.usernames = data.usernames;
                 this.state.teams = data.teams;
-                this._socket.emit('chat_message', data.chat_room, 'Hi, I am a bot. Nice to meet you!');
+                this._socket.emit('chat_message', data.chat_room, 'Hi, I\'m ' + this.name + '. Nice to meet you!');
             });
 
             this._socket.on('game_update', (data) => {
                 // this.log('Game update');
                 // Patch the city and map diffs into our local variables.
                 this.state.update(data, this);
+                this.pathFinding.update();
 
-                // Pick a random tile.
-                if (require('./moves/move-towards-empty')(this)) {
-                    this.log('Moved towards empty');
+                if (require('./moves/defend-base')(this)) {
+                    this.log('Defend base');
                     return;
                 }
-                if (require('./moves/move-any-free-cell')(this)) {
-                    this.log('Moved any free cell');
+                if (this.state.turn % 2 === 0) {
+                    switch (Math.floor(Math.random() * 2)) {
+                        case 0: {
+                            if (require('./moves/move-any-free-cell')(this)) {
+                                this.log('Moved any free cell');
+                                return;
+                            }
+                            break;
+                        }
+                        case 1: {
+                            if (require('./moves/move-towards-base')(this)) {
+                                this.log('Moved any free cell');
+                                return;
+                            }
+                            break;
+                        }
+                    }
+                }
+                if (require('./moves/move-towards-enemy')(this)) {
+                    this.log('Moved towards enemy');
+                    return;
+                }
+                if (require('./moves/move-towards-empty')(this)) {
+                    this.log('Moved towards empty');
                     return;
                 }
                 if (require('./moves/move-biggest-randomly')(this)) {
@@ -84,7 +126,7 @@ module.exports = class Ai {
             });
 
             this._socket.on('chat_message', (chat_room, data) => {
-                this.log('Chat', chat_room, data);
+                this.state.chat.push([chat_room, data]);
             });
 
             this._socket.on('game_lost', () => {
