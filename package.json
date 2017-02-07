@@ -12,7 +12,10 @@
   "dependencies": {
     "bower": "^1.8.0",
     "color": "^1.0.3",
-    "pathfinding": "^0.4.18",
+    "express": "^4.14.1",
+    "pathfinding": "https://github.com/paulrobello/PathFinding.js.git#3840d6e60b88a71c38ee5c356542b4a5883f3444",
+    "pm2": "^2.4.0",
+    "socket.io": "^1.7.2",
     "socket.io-client": "^1.7.2"
   }
 }

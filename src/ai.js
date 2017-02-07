@@ -13,6 +13,11 @@ module.exports = class Ai {
         this.state = new State(this);
         this.pathFinding = new PathFinding(this);
         this.finished = false;
+
+        this.stats = {
+            defendDistance: 6,
+            expandEveryNthTurns: 4,
+        };
     }
 
     joinMatch(match) {
@@ -88,10 +93,11 @@ module.exports = class Ai {
                 let ms = new Date().getTime();
                 // this.log('Game update');
                 // Patch the city and map diffs into our local variables.
-                this.state.update(data, this);
+                this.state.update(this, data);
                 this.pathFinding.update();
+                this.state.updatePriority(this);
 
-                if (require('./moves/defend-base')(this)) {
+                if (require('./moves/defend-base')(this, this.stats.defendDistance)) {
                     this.log('Defend base ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
@@ -99,33 +105,41 @@ module.exports = class Ai {
                     this.log('Skip ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
-                if (this.state.turn % 3 === 0) {
-                    switch (Math.floor(Math.random() * 2)) {
-                        case 0: {
-                            if (require('./moves/move-towards-base')(this)) {
-                                this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
-                                return;
-                            }
-                            break;
-                        }
-                    }
+                if (require('./moves/move-towards-city')(this)) {
+                    this.log('Moved towards city ' + (new Date().getTime() - ms) + 'ms');
+                    return;
+                }
+                if (this.state.turn % this.stats.expandEveryNthTurns === 0) {
+                    // switch (Math.floor(Math.random() * 2)) {
+                    //     case 0: {
+                    //         if (require('./moves/move-towards-base')(this)) {
+                    //             this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
+                    //             return;
+                    //         }
+                    //         break;
+                    //     }
+                    // }
                     if (require('./moves/move-any-free-cell')(this)) {
                         this.log('Moved any free cell ' + (new Date().getTime() - ms) + 'ms');
                         return;
                     }
                 }
-                if (require('./moves/move-towards-enemy')(this)) {
-                    this.log('Moved towards enemy ' + (new Date().getTime() - ms) + 'ms');
+                // if (require('./moves/move-towards-enemy')(this)) {
+                //     this.log('Moved towards enemy ' + (new Date().getTime() - ms) + 'ms');
+                //     return;
+                // }
+                if (require('./moves/move-towards-highest-priority')(this)) {
+                    this.log('Moved towards highest priority ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
-                if (require('./moves/move-towards-empty')(this)) {
-                    this.log('Moved towards empty ' + (new Date().getTime() - ms) + 'ms');
-                    return;
-                }
-                if (require('./moves/move-biggest-randomly')(this)) {
-                    this.log('Moved biggest randomly ' + (new Date().getTime() - ms) + 'ms');
-                    return;
-                }
+                // if (require('./moves/move-towards-empty')(this)) {
+                //     this.log('Moved towards empty ' + (new Date().getTime() - ms) + 'ms');
+                //     return;
+                // }
+                // if (require('./moves/move-biggest-randomly')(this)) {
+                //     this.log('Moved biggest randomly ' + (new Date().getTime() - ms) + 'ms');
+                //     return;
+                // }
 
                 this.log('No move found ' + (new Date().getTime() - ms) + 'ms');
             });
@@ -134,33 +148,34 @@ module.exports = class Ai {
                 this.state.chat.push([chat_room, data]);
             });
 
+            const writeHistory = (won) => {
+                try {
+                    this.log('Reading ' + historyFile);
+                    let history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
+                    history.push({
+                        date: new Date().getTime(),
+                        won: won,
+                        mode: this.mode,
+                        name: this.name,
+                        replayUrl: this.state.replayUrl,
+                    });
+                    this.log('Writing ' + historyFile);
+                    fs.writeFileSync(historyFile, JSON.stringify(history, null, 4));
+                } catch (error) {
+                    console.log(error);
+                }
+            };
+
             this._socket.on('game_lost', () => {
                 this.log('Game lost ' + this.state.replayUrl);
-                this.log('Reading ' + historyFile);
-                let history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
-                history.push({
-                    date: new Date().getTime(),
-                    won: false,
-                });
-                this.log('Game lost ' + this.state.replayUrl);
-                this.log('Writing ' + historyFile);
-                fs.writeFileSync(historyFile, JSON.stringify(history));
+                writeHistory(false);
                 this._socket.emit('leave_game');
                 this.finished = true;
             });
 
             this._socket.on('game_won', () => {
                 this.log('Game won ' + this.state.replayUrl);
-                this.log('Game lost ' + this.state.replayUrl);
-                this.log('Reading ' + historyFile);
-                let history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
-                history.push({
-                    date: new Date().getTime(),
-                    won: true,
-                });
-                this.log('Game lost ' + this.state.replayUrl);
-                this.log('Writing ' + historyFile);
-                fs.writeFileSync(historyFile, JSON.stringify(history));
+                writeHistory(true);
                 this._socket.emit('leave_game');
                 this.finished = true;
             });

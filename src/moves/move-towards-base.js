@@ -30,7 +30,7 @@ module.exports = function(ai) {
     if (closest) {
         let path = ai.pathFinding.findPath(closest.x, closest.y, ai.state.base.x, ai.state.base.y);
         if (path.length > 1) {
-            ai.log('Collect' +
+            ai.debug('Collect' +
                 ' c' + closest.x + ' ' + closest.y + ' ' +
                 ' p' + path[1][0] + ' ' + path[1][1] +
                 ' a' + closest.armies + ' ' + biggestArmy.armies);
@@ -38,10 +38,10 @@ module.exports = function(ai) {
             ai._socket.emit('attack', closest.i, endIndex);
             return true;
         } else {
-            ai.log('No path to base ' + closest.x + ' ' + closest.y + ' ' + ai.state.base.x + ' ' + ai.state.base.y);
+            ai.debug('No path to base ' + closest.x + ' ' + closest.y + ' ' + ai.state.base.x + ' ' + ai.state.base.y);
         }
     } else {
-        ai.log('No closest army to base ' +
+        ai.debug('No closest army to base ' +
             ' ' + (biggestArmy.armies / 4) + ' to ' + ((biggestArmy.armies / 4) * 3));
     }
     return false;

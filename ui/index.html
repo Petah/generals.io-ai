@@ -1,7 +1,7 @@
 <!doctype html>
 <html ng-app="App">
     <head>
-        <title>My AngularJS App</title>
+        <title>ai_0</title>
         <script src="../bower_components/tinycolor/tinycolor.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.js"></script>
         <style>
@@ -62,6 +62,11 @@
             }
 
             .zx-cell-text {
+                overflow: hidden;
+            }
+
+            .zx-small {
+                font-size: 8px;
             }
 
             .zx-cell-empty {
@@ -82,28 +87,24 @@
 
             .zx-cell-city {
                 background-color: #8e44ad;
-                box-shadow:inset 0px 0px 0px 2px #8e44ad;
+                box-shadow: inset 0px 0px 0px 3px #8e44ad;
+            }
+
+            .zx-cell-color-0 {
+                box-shadow: inset 0px 0px 0px 1px #1abc9c;
+            }
+
+            .zx-cell-color-1 {
+                box-shadow: inset 0px 0px 0px 1px #3498db;
+            }
+
+            .zx-cell-color-2 {
+                box-shadow: inset 0px 0px 0px 1px #f1c40f;
             }
 
             .zx-cell-general {
                 text-decoration: underline;
-                box-shadow:inset 0px 0px 0px 2px #2c3e50;
-            }
-
-            .zx-cell-color-0 {
-                background-color: #3498db;
-            }
-
-            .zx-cell-color-1 {
-                background-color: #e74c3c;
-            }
-
-            .zx-cell-color-2 {
-                background-color: #2ecc71;
-            }
-
-            .zx-cell-color-3 {
-                background-color: #f1c40f;
+                box-shadow: inset 0px 0px 0px 3px #2c3e50;
             }
 
             .zx-overlay {
@@ -118,6 +119,8 @@
         <div class="zx-toolbar">
             <button ng-click="start()">Start</button>
             <button ng-click="stop()">Stop</button>
+            <button ng-click="toggleOverlay()">Toggle Overlay</button>
+            <a href="{{ ais[0].replayUrl }}" target="_blank">Replay</a>
         </div>
         <div class="zx-grid" ng-if="ais.length == 1">
             <div class="zx-grid-row">
@@ -134,16 +137,25 @@
                 <div zx-ai="ais[3]" class="zx-ai"></div>
             </div>
         </div>
+        <script src="/socket.io/socket.io.js"></script>
         <script>
-            var app = angular.module('App', []);
-            var queue = [];
-            var combineState = function(ai, others) {
+            const TILE_EMPTY = -1;
+            const TILE_MOUNTAIN = -2;
+            const TILE_FOG = -3;
+            const TILE_FOG_OBSTACLE = -4;
+
+            const socket = io();
+
+            const app = angular.module('App', []);
+            const queue = [];
+            const combineState = function(ai, others) {
                 ai = angular.copy(others[0], {});
                 delete ai.log;
                 for (var i = 1; i < others.length; i++) {
                     for (var r = 0; r < ai.height; r++) {
                         for (var c = 0; c < ai.width; c++) {
                             if (others[i] && others[i].replayUrl == ai.replayUrl) {
+                                ai.rows[r][c].priority = 0;
                                 if (others[i].rows[r][c].armies > ai.rows[r][c].armies) {
                                     ai.rows[r][c].armies = others[i].rows[r][c].armies;
                                     ai.rows[r][c].playerIndex = others[i].rows[r][c].playerIndex;
@@ -163,31 +175,22 @@
 
             app.controller('AppController', function($scope, $http, $interval) {
                 let started = true;
-                var updateAi = function() {
-                    $http({
-                        url: '../data/ais.json',
-                        params: {
-                            date: new Date().getTime(),
-                        },
-                    }).then(function(response) {
-                        $scope.ais = response.data;
-                        if ($scope.ais.length > 1) {
-                            $scope.ais[3] = combineState($scope.ai3, [$scope.ais[0], $scope.ais[1], $scope.ais[2]]);
-                        }
-                        queue.push({});
-                    });
-                };
+
+                $scope.overlay = false;
                 $scope.ais = [];
-                updateAi();
-                $interval(function() {
-                    if (!started) {
+
+                console.log('Binding socket');
+                socket.on('data', function(data) {
+                    if (!started || !document.hasFocus()) {
                         return;
                     }
-                    if (queue.length) {
-                        var next = queue.shift();
-                        updateAi();
+                    console.log('Data');
+                    $scope.ais = data;
+                    if ($scope.ais.length > 1) {
+                        // $scope.ais[3] = combineState($scope.ai3, [$scope.ais[0], $scope.ais[1], $scope.ais[2]]);
                     }
-                }, 450);
+                    $scope.$apply();
+                });
 
                 $scope.stop = function() {
                     started = false;
@@ -196,6 +199,10 @@
                 $scope.start = function() {
                     started = true;
                 };
+
+                $scope.toggleOverlay = function() {
+                    $scope.overlay = !$scope.overlay;
+                }
             });
             app.filter('reverse', function() {
                 return function(items) {
@@ -211,6 +218,11 @@
                         return items.join(' ');
                     }
                     return items;
+                };
+            });
+            app.filter('round', function() {
+                return function(value) {
+                    return Math.round(value);
                 };
             });
             app.directive('zxAi', function() {
@@ -235,15 +247,19 @@
                                 backgroundColor: getColor(ai, col),
                             }">
                                 <div class="zx-cell-text">
+                                    {{ col.wasGeneral ? 'G' : '' }}
+                                    {{ col.cities >= 0 ? 'C' : '' }}
                                     {{ col.terrain == -1 ? '' : '' }}
                                     {{ col.terrain == -2 ? 'M' : '' }}
                                     {{ col.terrain == -3 ? '' : '' }}
                                     {{ col.terrain == -4 ? 'O' : '' }}
                                     {{ col.armies > 0 ? col.armies : '' }}
+                                    <span class="zx-small" ng-show="col.priority > 0">{{ col.priority * 100 | round }}</span>
+                                    <span class="zx-small" ng-show="col.terrain >= 0 && col.cost > 0">({{ col.cost }})</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="zx-overlay">
+                        <div class="zx-overlay" ng-show="$parent.overlay">
                             <div ng-repeat="message in ai.chat">{{ message[1].text }}</div>
                             <div><a href="{{ ai.replayUrl }}" target="_blank">Replay</a></div>
                             <div>Turn {{ ai.turn }}</div>
@@ -261,23 +277,46 @@
                         };
 
                         const colors = [
+                            '#1abc9c',
                             '#3498db',
-                            '#e74c3c',
-                            '#2ecc71',
                             '#f1c40f',
                         ];
 
-                        scope.getColor = (ai, col) => {
-                            switch (col.terrain) {
-                                case -4: return '#999';
-                                case -3: return '#aaa';
-                                case -2: return '#444';
-                                case -1: return '#fff';
-                            }
-                            let hex = colors[col.terrain];
+                        const alphaColor = (hex, alpha) => {
                             let color = tinycolor(hex).toRgb();
-                            let alpha = col.armies / ai.maxArmies;
                             return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+                        }
+                        let i = 0;
+
+                        scope.getColor = (ai, col) => {
+                            if (!col.backgroundColor) {
+                                switch (col.terrain) {
+                                    case TILE_FOG_OBSTACLE: {
+                                        col.backgroundColor = '#999';
+                                        break;
+                                    }
+                                    case TILE_FOG: {
+                                        col.backgroundColor = tinycolor.mix('#aaa', '#e74c3c', col.priority * 100);
+                                        break;
+                                    }
+                                    case TILE_MOUNTAIN: {
+                                        col.backgroundColor = '#444';
+                                        break;
+                                    }
+                                    case TILE_EMPTY: {
+                                        col.backgroundColor = '#fff';
+                                        break;
+                                    }
+                                    default: {
+                                        let hex = colors[col.terrain];
+                                        let alpha = col.armies / ai.maxArmies;
+                                        col.backgroundColor = alphaColor(hex, alpha);
+                                        break;
+                                    }
+                                }
+                            }
+                            return col.backgroundColor;
+                            console.log(i++);
                         };
                     },
                 };
