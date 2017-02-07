@@ -3,7 +3,9 @@ const Match = require('./src/match');
 const fs = require('fs');
 
 // const mode = 'private';
-const mode = '1v1';
+// const mode = 'ffa';
+// const mode = '1v1';
+const mode = Math.random() < 0.3 ? 'ffa' : '1v1';
 
 const express = require('express');
 const app = express();

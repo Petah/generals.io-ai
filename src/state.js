@@ -58,6 +58,7 @@ class State {
                         priority: 0,
                         general: -1,
                         wasGeneral: false,
+                        notGeneral: null,
                         cost: 0,
                     });
                 }
@@ -78,6 +79,12 @@ class State {
                     this.rows[r][c].wasGeneral = false;
                 }
 
+                if (this.rows[r][c].notGeneral === null) {
+                    if (general === -1 && this.terrain[i] !== TILE_FOG && this.terrain[i] !== TILE_FOG_OBSTACLE) {
+                        this.rows[r][c].notGeneral = true;
+                    }
+                }
+
                 if (this.rows[r][c].terrain !== TILE_MOUNTAIN) {
                     this.rows[r][c].terrain = this.terrain[i];
                     this.rows[r][c].armies = this.armies[i];
@@ -86,7 +93,7 @@ class State {
                 }
 
                 // Prioritise generals
-                if (this.rows[r][c].wasGeneral) {
+                if (this.rows[r][c].wasGeneral && this.rows[r][c].cities === -1) {
                     this.rows[r][c].priority = 1;
                 } else if (this.rows[r][c].terrain === TILE_EMPTY) {
                     this.rows[r][c].priority = 0;
@@ -123,6 +130,9 @@ class State {
                                 this.rows[r][c].priority = Math.min(1, Math.abs((distance / (this.width + this.height))) * 2);
                             } else {
                                 this.rows[r][c].priority = Math.abs((distance / (this.width + this.height)));
+                            }
+                            if (this.rows[r][c].notGeneral) {
+                                this.rows[r][c].priority /= 2;
                             }
                         }
                     }

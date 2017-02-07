@@ -254,6 +254,7 @@
                                     {{ col.terrain == -3 ? '' : '' }}
                                     {{ col.terrain == -4 ? 'O' : '' }}
                                     {{ col.armies > 0 ? col.armies : '' }}
+                                    {{ col.notGeneral ? 'N' : '' }}
                                     <span class="zx-small" ng-show="col.priority > 0">{{ col.priority * 100 | round }}</span>
                                     <span class="zx-small" ng-show="col.terrain >= 0 && col.cost > 0">({{ col.cost }})</span>
                                 </div>
@@ -280,6 +281,9 @@
                             '#1abc9c',
                             '#3498db',
                             '#f1c40f',
+                            '#8e44ad',
+                            '#00ff00',
+                            '#0000ff',
                         ];
 
                         const alphaColor = (hex, alpha) => {

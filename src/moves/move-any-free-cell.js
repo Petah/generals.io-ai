@@ -1,9 +1,17 @@
 const State = require('./../state');
+const findBiggestArmy = require('./find-biggest-army');
 
 module.exports = function(ai) {
+    let biggestArmy = findBiggestArmy(ai);
+    if (!biggestArmy) {
+        return false;
+    }
     let moved = false;
     ai.state.forEachCell((cell) => {
         if (cell.terrain === ai.playerIndex && cell.armies > 1) {
+            if (biggestArmy.i === cell.i) {
+                return false;
+            }
             var up = ai.state.getCellUp(cell.i);
             var down = ai.state.getCellDown(cell.i);
             var left = ai.state.getCellLeft(cell.i);
