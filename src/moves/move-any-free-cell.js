@@ -25,7 +25,7 @@ module.exports = function(ai) {
                         continue;
                     }
 
-                    if (directions[i].terrain == State.TILE_EMPTY && directions[i].cities === -1) {
+                    if (directions[i].terrain == State.TILE_EMPTY && !directions[i].wasCity) {
                         ai.debug('Move next');
                         ai._socket.emit('attack', cell.i, directions[i].i);
                         return true;

@@ -163,8 +163,8 @@
                                 } else if (ai.rows[r][c].terrain < -2 && others[i].rows[r][c].terrain >= -2) {
                                     ai.rows[r][c].terrain = others[i].rows[r][c].terrain;
                                 }
-                                if (ai.rows[r][c].cities < 0 && others[i].rows[r][c].cities >= -1) {
-                                    ai.rows[r][c].cities = others[i].rows[r][c].cities;
+                                if (!ai.rows[r][c].wasCity && others[i].rows[r][c].wasCity) {
+                                    ai.rows[r][c].wasCity = others[i].rows[r][c].wasCity;
                                 }
                             }
                         }
@@ -237,7 +237,7 @@
                                 'zx-cell-mountain': col.terrain == -2,
                                 'zx-cell-fog': col.terrain == -3,
                                 'zx-cell-fog-obstacle': col.terrain == -4,
-                                'zx-cell-city': col.cities >= 0,
+                                'zx-cell-city': col.wasCity,
                                 'zx-cell-general': col.general >= 0,
                                 'zx-cell-color-0': col.terrain == 0,
                                 'zx-cell-color-1': col.terrain == 1,
@@ -248,7 +248,7 @@
                             }">
                                 <div class="zx-cell-text">
                                     {{ col.wasGeneral ? 'G' : '' }}
-                                    {{ col.cities >= 0 ? 'C' : '' }}
+                                    {{ col.wasCity ? 'C' : '' }}
                                     {{ col.armies > 0 ? col.armies : '' }}
                                     {{ col.notGeneral && col.terrain === -3 ? 'N' : '' }}
                                     <span class="zx-small" ng-show="col.priority > 0">({{ col.priority * 100 | round }})</span>
@@ -262,6 +262,9 @@
                             <div>Turn {{ ai.turn }}</div>
                             <div>Min {{ ai.minArmies }}</div>
                             <div>Max {{ ai.maxArmies }}</div>
+                            <div>Total {{ ai.totalArmies }}</div>
+                            <div>Count {{ ai.armiesCount }}</div>
+                            <div>Average {{ ai.averageArmies }}</div>
                             <div ng-repeat="score in ai.scores">{{ score.tiles }} {{ score.total }} {{ ai.usernames[$index] }}</div>
                             <div ng-repeat="(key, value) in ai.stats">{{ key }} {{ value }}</div>
                             <div ng-repeat="log in formatLog(ai.log) track by $index">{{ log }}</div>

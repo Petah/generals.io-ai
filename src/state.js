@@ -46,6 +46,9 @@ class State {
 
         this.minArmies = 999999;
         this.maxArmies = 0;
+        this.averageArmies = 0;
+        this.totalArmies = 0;
+        this.armiesCount = 0;
 
         if (this.rows === null) {
             this.rows = [];
@@ -61,6 +64,7 @@ class State {
                         general: -1,
                         wasGeneral: false,
                         notGeneral: null,
+                        wasCity: null,
                         cost: 0,
                     });
                 }
@@ -94,6 +98,10 @@ class State {
                     this.rows[r][c].general = general;
                 }
 
+                if (this.rows[r][c].cities >= 0 && this.rows[r][c].wasCity === null) {
+                    this.rows[r][c].wasCity = true;
+                }
+
                 // Prioritise generals
                 if (this.rows[r][c].wasGeneral && this.rows[r][c].cities === -1) {
                     this.rows[r][c].priority = 1;
@@ -107,9 +115,15 @@ class State {
                 if (this.terrain[i] === ai.playerIndex) {
                     this.minArmies = Math.min(this.minArmies, this.armies[i]);
                     this.maxArmies = Math.max(this.maxArmies, this.armies[i]);
+                    if (this.armies[i] > 1) {
+                        this.totalArmies += this.armies[i] - 1;
+                        this.armiesCount++
+                    }
                 }
             }
         }
+
+        this.averageArmies = this.totalArmies / this.armiesCount;
 
         this.base = data.generals && data.generals.length && data.generals[ai.playerIndex] >= 0 ? this.getCell(data.generals[ai.playerIndex]) : null;
     }

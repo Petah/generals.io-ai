@@ -8,9 +8,9 @@ module.exports = function(ai, captureDistance = 4) {
         return false;
     }
     let [closest, distance] = findClosest(ai, biggestArmy.x, biggestArmy.y, (cell) => {
-        return cell.cities >= 0 && cell.terrain !== ai.playerIndex && biggestArmy.armies > cell.armies + 1;
+        return cell.wasCity && cell.terrain !== ai.playerIndex && biggestArmy.armies > cell.armies + 1;
     }, findClosest.TYPE_SHORTEST_PATH_INCLUDE_CITIES);
-    if (closest && distance < captureDistance) {
+    if (closest && distance <= captureDistance) {
         let path = ai.pathFinding.findPathIncludeCities(biggestArmy.x, biggestArmy.y, closest.x, closest.y);
         if (path.length > 1) {
             ai.debug('Move towards city ' + biggestArmy.x + ' ' + biggestArmy.y + ' ' + closest.x + ' ' + closest.y + ' ' + path[1][0] + ' ' + path[1][1]);

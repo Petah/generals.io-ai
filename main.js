@@ -33,10 +33,9 @@ let ais = [];
 
 for (let i = 0; i < aiCount; i++) {
     let ai = new Ai('daves_test_bot_' + i, 'ai_' + i, mode, {
-        defendDistance: chance.pickone([4, 6, 8, 10, 12]),
-        expandEveryNthTurns: chance.pickone([2, 3, 4, 5, 6, 7, 8]),
-        captureCityDistance: chance.pickone([2, 3, 4, 5, 6, 7, 8]),
-        combineClusterFactor: chance.pickone([2, 3, 4]),
+        defendDistance: chance.pickone([5, 10]),
+        expandEveryNthTurns: chance.pickone([3, 6]),
+        captureCityDistance: chance.pickone([3, 6]),
     });
     ai.joinMatch(match);
     ais.push(ai);

@@ -40,12 +40,13 @@ class PathFinding {
                     matrix[r][c] = BLOCKED;
                     matrixIncludeCities[r][c] = BLOCKED;
                     costs[r][c] = 0;
-                } else if (col.cities !== -1) {
-                    matrix[r][c] = BLOCKED;
+                } else if (col.wasCity) {
                     matrixIncludeCities[r][c] = FREE;
                     costs[r][c] = 10;
+                    matrix[r][c] = BLOCKED;
                     if (col.terrain === this.ai.playerIndex) {
                         costs[r][c] = Math.max(0, costs[r][c] - col.armies + 1);
+                        matrix[r][c] = FREE;
                     } else if (col.terrain >= 0) {
                         costs[r][c] += col.armies;
                     }

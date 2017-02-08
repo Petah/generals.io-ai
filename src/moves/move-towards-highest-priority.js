@@ -15,7 +15,7 @@ module.exports = function(ai) {
     }
     let biggestArmy = findBiggestArmy(ai, (cell) => {
         let path = ai.pathFinding.findPath(cell.x, cell.y, highestPriority.x, highestPriority.y);
-        if (path.length === 2 && highestPriority.armies >= cell.armies) {
+        if (path.length === 2 && cell.armies < highestPriority.armies / 2) {
             ai.debug('Avoiding ' + cell.x + ' ' + cell.y + ' armies ' + cell.armies);
             return false;
         }

@@ -19,7 +19,6 @@ module.exports = class Ai {
             defendDistance: 6,
             expandEveryNthTurns: 4,
             captureCityDistance: 4,
-            combineClusterFactor: 2,
         }, stats);
 
         this.state = new State(this);
@@ -115,7 +114,7 @@ module.exports = class Ai {
                     return;
                 }
                 if (this.state.turn % this.stats.expandEveryNthTurns === 0) {
-                    switch (chance.pickone(['combine-cluster'/*, 'move-any-free-cell'*/])) {
+                    switch (chance.pickone(['combine-cluster', 'move-any-free-cell'])) {
                         // case 'move-towards-base': {
                         //     if (require('./moves/move-towards-base')(this)) {
                         //         this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
