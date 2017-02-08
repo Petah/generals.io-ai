@@ -101,6 +101,10 @@ module.exports = class Ai {
                 this.pathFinding.update();
                 this.state.updatePriority(this);
 
+                if (require('./moves/finish-him')(this)) {
+                    this.log('Finish him ' + (new Date().getTime() - ms) + 'ms');
+                    return;
+                }
                 if (require('./moves/defend-base')(this, this.stats.defendDistance)) {
                     this.log('Defend base ' + (new Date().getTime() - ms) + 'ms');
                     return;
