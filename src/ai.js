@@ -2,22 +2,27 @@ const io = require('socket.io-client');
 const State = require('./state');
 const PathFinding = require('./path-finding');
 const fs = require('fs');
+const extend = require('extend');
 const historyFile = __dirname + '/../data/history.json';
+const chance = new require('chance')();
 
 module.exports = class Ai {
-    constructor(id, name, mode) {
+    constructor(id, name, mode, stats) {
         this.id = id;
         this.name = name;
         this.mode = mode;
         this.playerIndex = null;
-        this.state = new State(this);
         this.pathFinding = new PathFinding(this);
         this.finished = false;
 
-        this.stats = {
+        this.stats = extend({
             defendDistance: 6,
             expandEveryNthTurns: 4,
-        };
+            captureCityDistance: 4,
+            combineClusterFactor: 2,
+        }, stats);
+
+        this.state = new State(this);
     }
 
     joinMatch(match) {
@@ -34,7 +39,7 @@ module.exports = class Ai {
         while (this.state.log.length > 10) {
             this.state.log.shift();
         }
-        console.log.apply(console, ['[' + this.name + '] '].concat(Array.prototype.slice.call(arguments)));
+        console.log.apply(console, ['[' + this.name + '] ' + this.state.turn + ' '].concat(Array.prototype.slice.call(arguments)));
     }
 
     forceStart() {
@@ -105,23 +110,33 @@ module.exports = class Ai {
                     this.log('Skip ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
-                if (require('./moves/move-towards-city')(this)) {
+                if (require('./moves/move-towards-city')(this, this.stats.captureCityDistance)) {
                     this.log('Moved towards city ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
                 if (this.state.turn % this.stats.expandEveryNthTurns === 0) {
-                    // switch (Math.floor(Math.random() * 2)) {
-                    //     case 0: {
-                    //         if (require('./moves/move-towards-base')(this)) {
-                    //             this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
-                    //             return;
-                    //         }
-                    //         break;
-                    //     }
-                    // }
-                    if (require('./moves/move-any-free-cell')(this)) {
-                        this.log('Moved any free cell ' + (new Date().getTime() - ms) + 'ms');
-                        return;
+                    switch (chance.pickone(['combine-cluster'/*, 'move-any-free-cell'*/])) {
+                        // case 'move-towards-base': {
+                        //     if (require('./moves/move-towards-base')(this)) {
+                        //         this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
+                        //         return;
+                        //     }
+                        //     break;
+                        // }
+                        case 'combine-cluster': {
+                            if (require('./moves/combine-cluster')(this, this.stats.combineClusterFactor)) {
+                                this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
+                                return;
+                            }
+                            break;
+                        }
+                        case 'move-any-free-cell': {
+                            if (require('./moves/move-any-free-cell')(this)) {
+                                this.log('Moved any free cell ' + (new Date().getTime() - ms) + 'ms');
+                                return;
+                            }
+                            break;
+                        }
                     }
                 }
                 // if (require('./moves/move-towards-enemy')(this)) {
@@ -155,9 +170,15 @@ module.exports = class Ai {
                     history.push({
                         date: new Date().getTime(),
                         won: won,
+                        turns: this.state.turn,
                         mode: this.mode,
                         name: this.name,
                         replayUrl: this.state.replayUrl,
+                        stats: this.stats,
+                        scores: this.state.scores.map((score) => {
+                            score.name = this.state.usernames[score.i];
+                            return score;
+                        }),
                     });
                     this.log('Writing ' + historyFile);
                     fs.writeFileSync(historyFile, JSON.stringify(history, null, 4));

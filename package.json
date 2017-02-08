@@ -11,8 +11,10 @@
   "repository": {},
   "dependencies": {
     "bower": "^1.8.0",
+    "chance": "^1.0.4",
     "color": "^1.0.3",
     "express": "^4.14.1",
+    "extend": "^3.0.0",
     "pathfinding": "https://github.com/paulrobello/PathFinding.js.git#3840d6e60b88a71c38ee5c356542b4a5883f3444",
     "pm2": "^2.4.0",
     "socket.io": "^1.7.2",

@@ -9,6 +9,7 @@ const TILE_FOG_OBSTACLE = -4;
 class State {
 
     constructor(ai) {
+        this.turn = 0;
         this.generals = null;
         this.cities = [];
         this.map = [];
@@ -16,6 +17,7 @@ class State {
         this.chat = [];
         this.rows = null;
         this.fogPriorityCalculated = false;
+        this.stats = ai.stats;
     }
 
     update(ai, data) {
@@ -47,9 +49,9 @@ class State {
 
         if (this.rows === null) {
             this.rows = [];
-            for (var r = 0; r < this.height; r++) {
+            for (let r = 0; r < this.height; r++) {
                 var row = [];
-                for (var c = 0; c < this.width; c++) {
+                for (let c = 0; c < this.width; c++) {
                     let i = r * this.width + c;
                     row.push({
                         i: i,
@@ -66,8 +68,8 @@ class State {
             }
         }
 
-        for (var r = 0; r < this.height; r++) {
-            for (var c = 0; c < this.width; c++) {
+        for (let r = 0; r < this.height; r++) {
+            for (let c = 0; c < this.width; c++) {
                 let i = r * this.width + c;
 
                 let general = this.generals.indexOf(i);
@@ -117,8 +119,8 @@ class State {
         // if (!this.fogPriorityCalculated || this.turn % 20 === 0) {
         //     this.fogPriorityCalculated = true;
             let r = this.turn % this.height;
-            // for (var r = 0; r < this.height; r++) {
-                for (var c = 0; c < this.width; c++) {
+            // for (let r = 0; r < this.height; r++) {
+                for (let c = 0; c < this.width; c++) {
                     if (this.rows[r][c].terrain === TILE_FOG) {
                         let [closest, distance] = findClosest(ai, c, r, (cell) => {
                             if (cell.terrain === TILE_EMPTY || cell.terrain >= 0) {
@@ -132,23 +134,13 @@ class State {
                                 this.rows[r][c].priority = Math.abs((distance / (this.width + this.height)));
                             }
                             if (this.rows[r][c].notGeneral) {
-                                this.rows[r][c].priority /= 2;
+                                this.rows[r][c].priority /= 4;
                             }
                         }
                     }
                 }
             // }
         // }
-    }
-
-    forEachCell(callback) {
-        for (var r = 0; r < this.height; r++) {
-            for (var c = 0; c < this.width; c++) {
-                if (callback(this.rows[r][c])) {
-                    return;
-                }
-            }
-        }
     }
 
     getCell(i) {

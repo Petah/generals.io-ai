@@ -3,19 +3,26 @@ const findBiggestArmy = require('./find-biggest-army');
 const findClosest = require('./find-closest');
 
 module.exports = function(ai) {
-    let biggestArmy = findBiggestArmy(ai);
-    if (!biggestArmy) {
-        return false;
-    }
     let highestPriority = null;
-    for (var r = 0; r < ai.state.height; r++) {
-        for (var c = 0; c < ai.state.width; c++) {
+    for (let r = 0; r < ai.state.height; r++) {
+        for (let c = 0; c < ai.state.width; c++) {
             if (ai.state.rows[r][c].priority) {
                 if (highestPriority === null || ai.state.rows[r][c].priority > highestPriority.priority) {
                     highestPriority =  ai.state.rows[r][c];
                 }
             }
         }
+    }
+    let biggestArmy = findBiggestArmy(ai, (cell) => {
+        let path = ai.pathFinding.findPath(cell.x, cell.y, highestPriority.x, highestPriority.y);
+        if (path.length === 2 && highestPriority.armies >= cell.armies) {
+            ai.debug('Avoiding ' + cell.x + ' ' + cell.y + ' armies ' + cell.armies);
+            return false;
+        }
+        return true;
+    });
+    if (!biggestArmy) {
+        return false;
     }
     if (highestPriority) {
         let path = ai.pathFinding.findPath(biggestArmy.x, biggestArmy.y, highestPriority.x, highestPriority.y);

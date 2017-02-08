@@ -15,8 +15,6 @@
     "tests"
   ],
   "dependencies": {
-    "color": "^3.0.4",
-    "tinycolor": "^1.4.1",
-    "PathFinding.js": "https://github.com/paulrobello/PathFinding.js.git#3840d6e60b88a71c38ee5c356542b4a5883f3444"
+    "tinycolor": "^1.4.1"
   }
 }

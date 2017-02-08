@@ -26,11 +26,11 @@ class PathFinding {
         let matrix = [];
         let matrixIncludeCities = [];
         let costs = [];
-        for (var r = 0; r < this.ai.state.height; r++) {
+        for (let r = 0; r < this.ai.state.height; r++) {
             matrix[r] = [];
             matrixIncludeCities[r] = [];
             costs[r] = [];
-            for (var c = 0; c < this.ai.state.width; c++) {
+            for (let c = 0; c < this.ai.state.width; c++) {
                 let col = this.ai.state.rows[r][c];
                 if (col.terrain === State.TILE_MOUNTAIN) {
                     matrix[r][c] = BLOCKED;

@@ -1,11 +1,12 @@
 const Ai = require('./src/ai');
 const Match = require('./src/match');
 const fs = require('fs');
+const chance = new require('chance')();
 
 // const mode = 'private';
 // const mode = 'ffa';
-// const mode = '1v1';
-const mode = Math.random() < 0.3 ? 'ffa' : '1v1';
+const mode = '1v1';
+// const mode = Math.random() < 0.3 ? 'ffa' : '1v1';
 
 const express = require('express');
 const app = express();
@@ -31,7 +32,12 @@ let aiCount = mode === 'private' ? 3 : 1;
 let ais = [];
 
 for (let i = 0; i < aiCount; i++) {
-    let ai = new Ai('daves_test_bot_' + i, 'ai_' + i, mode);
+    let ai = new Ai('daves_test_bot_' + i, 'ai_' + i, mode, {
+        defendDistance: chance.pickone([4, 6, 8, 10, 12]),
+        expandEveryNthTurns: chance.pickone([2, 3, 4, 5, 6, 7, 8]),
+        captureCityDistance: chance.pickone([2, 3, 4, 5, 6, 7, 8]),
+        combineClusterFactor: chance.pickone([2, 3, 4]),
+    });
     ai.joinMatch(match);
     ais.push(ai);
 }

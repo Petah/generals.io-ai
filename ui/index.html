@@ -151,9 +151,9 @@
             const combineState = function(ai, others) {
                 ai = angular.copy(others[0], {});
                 delete ai.log;
-                for (var i = 1; i < others.length; i++) {
-                    for (var r = 0; r < ai.height; r++) {
-                        for (var c = 0; c < ai.width; c++) {
+                for (let i = 1; i < others.length; i++) {
+                    for (let r = 0; r < ai.height; r++) {
+                        for (let c = 0; c < ai.width; c++) {
                             if (others[i] && others[i].replayUrl == ai.replayUrl) {
                                 ai.rows[r][c].priority = 0;
                                 if (others[i].rows[r][c].armies > ai.rows[r][c].armies) {
@@ -249,14 +249,10 @@
                                 <div class="zx-cell-text">
                                     {{ col.wasGeneral ? 'G' : '' }}
                                     {{ col.cities >= 0 ? 'C' : '' }}
-                                    {{ col.terrain == -1 ? '' : '' }}
-                                    {{ col.terrain == -2 ? 'M' : '' }}
-                                    {{ col.terrain == -3 ? '' : '' }}
-                                    {{ col.terrain == -4 ? 'O' : '' }}
                                     {{ col.armies > 0 ? col.armies : '' }}
-                                    {{ col.notGeneral ? 'N' : '' }}
-                                    <span class="zx-small" ng-show="col.priority > 0">{{ col.priority * 100 | round }}</span>
-                                    <span class="zx-small" ng-show="col.terrain >= 0 && col.cost > 0">({{ col.cost }})</span>
+                                    {{ col.notGeneral && col.terrain === -3 ? 'N' : '' }}
+                                    <span class="zx-small" ng-show="col.priority > 0">({{ col.priority * 100 | round }})</span>
+                                    <span class="zx-small" ng-show="col.terrain >= 0 && col.cost > 0">{{ col.cost }}</span>
                                 </div>
                             </div>
                         </div>
@@ -267,6 +263,7 @@
                             <div>Min {{ ai.minArmies }}</div>
                             <div>Max {{ ai.maxArmies }}</div>
                             <div ng-repeat="score in ai.scores">{{ score.tiles }} {{ score.total }} {{ ai.usernames[$index] }}</div>
+                            <div ng-repeat="(key, value) in ai.stats">{{ key }} {{ value }}</div>
                             <div ng-repeat="log in formatLog(ai.log) track by $index">{{ log }}</div>
                         </div>
                     `,
@@ -320,7 +317,6 @@
                                 }
                             }
                             return col.backgroundColor;
-                            console.log(i++);
                         };
                     },
                 };
