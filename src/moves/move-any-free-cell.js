@@ -9,7 +9,7 @@ module.exports = function(ai) {
     for (let r = 0; r < ai.state.height; r++) {
         for (let c = 0; c < ai.state.width; c++) {
             let cell = ai.state.rows[r][c];
-            if (cell.terrain === ai.playerIndex && cell.armies > 1) {
+            if (cell.terrain === ai.state.playerIndex && cell.armies > 1) {
                 if (cell.armies >= ai.state.maxArmies / 2) {
                     continue;
                 }
@@ -30,7 +30,7 @@ module.exports = function(ai) {
                         ai._socket.emit('attack', cell.i, directions[i].i);
                         return true;
                     }
-                    if (directions[i].terrain >= 0 && directions[i].terrain != ai.playerIndex && directions[i].armies < cell.armies - 1) {
+                    if (directions[i].terrain >= 0 && directions[i].terrain != ai.state.playerIndex && directions[i].armies < cell.armies - 1) {
                         ai.debug('Attack next');
                         ai._socket.emit('attack', cell.i, directions[i].i);
                         return true;

@@ -6,8 +6,7 @@ const FREE = 0;
 
 class PathFinding {
 
-    constructor(ai) {
-        this.ai = ai;
+    constructor() {
         this.finder = new PF.AStarFinder({
             allowDiagonal: false,
             useCost: true,
@@ -22,16 +21,16 @@ class PathFinding {
         });
     }
 
-    update() {
+    update(state) {
         let matrix = [];
         let matrixIncludeCities = [];
         let costs = [];
-        for (let r = 0; r < this.ai.state.height; r++) {
+        for (let r = 0; r < state.height; r++) {
             matrix[r] = [];
             matrixIncludeCities[r] = [];
             costs[r] = [];
-            for (let c = 0; c < this.ai.state.width; c++) {
-                let col = this.ai.state.rows[r][c];
+            for (let c = 0; c < state.width; c++) {
+                let col = state.rows[r][c];
                 if (col.terrain === State.TILE_MOUNTAIN) {
                     matrix[r][c] = BLOCKED;
                     matrixIncludeCities[r][c] = BLOCKED;
@@ -44,28 +43,28 @@ class PathFinding {
                     matrixIncludeCities[r][c] = FREE;
                     costs[r][c] = 10;
                     matrix[r][c] = BLOCKED;
-                    if (col.terrain === this.ai.playerIndex) {
+                    if (col.terrain === state.playerIndex) {
                         costs[r][c] = Math.max(0, costs[r][c] - col.armies + 1);
                         matrix[r][c] = FREE;
-                    } else if (col.terrain >= 0) {
-                        costs[r][c] += col.armies;
+                    } else if (col.wasEnemy) {
+                        costs[r][c] += col.wasEnemy.armies;
                     }
-                    this.ai.state.rows[r][c].cost = costs[r][c];
+                    state.rows[r][c].cost = costs[r][c];
                 } else {
                     matrix[r][c] = FREE;
                     matrixIncludeCities[r][c] = FREE;
                     costs[r][c] = 10;
-                    if (col.terrain === this.ai.playerIndex) {
+                    if (col.terrain === state.playerIndex) {
                         costs[r][c] = Math.max(0, costs[r][c] - col.armies + 1);
-                    } else if (col.terrain >= 0) {
-                        costs[r][c] += col.armies;
+                    } else if (col.wasEnemy) {
+                        costs[r][c] += col.wasEnemy.armies;
                     }
-                    this.ai.state.rows[r][c].cost = costs[r][c];
+                    state.rows[r][c].cost = costs[r][c];
                 }
             }
         }
-        this.grid = new PF.Grid(this.ai.state.width, this.ai.state.height, matrix, costs);
-        this.gridIncludeCities = new PF.Grid(this.ai.state.width, this.ai.state.height, matrixIncludeCities, costs);
+        this.grid = new PF.Grid(state.width, state.height, matrix, costs);
+        this.gridIncludeCities = new PF.Grid(state.width, state.height, matrixIncludeCities, costs);
     }
 
     findPath(x1, y1, x2, y2) {

@@ -6,28 +6,28 @@ const TYPE_SHORTEST_PATH_IGNORE_PRIORITY = 2;
 const TYPE_SHORTEST_PATH_INCLUDE_CITIES = 3;
 const TYPE_POINT_DISTANCE = 4;
 
-module.exports = function(ai, x, y, callback, distanceType = 1, allowCities = false) {
+module.exports = function(state, pathFinding, x, y, callback, distanceType = 1, allowCities = false) {
     let closest = null;
     let closestDistance = null;
-    for (let r = 0; r < ai.state.height; r++) {
-        for (let c = 0; c < ai.state.width; c++) {
-            let cell = ai.state.rows[r][c];
+    for (let r = 0; r < state.height; r++) {
+        for (let c = 0; c < state.width; c++) {
+            let cell = state.rows[r][c];
             if (callback(cell)) {
                 let distance;
                 if (distanceType === TYPE_SHORTEST_PATH) {
-                    let path = ai.pathFinding.findPath(x, y, cell.x, cell.y);
+                    let path = pathFinding.findPath(x, y, cell.x, cell.y);
                     if (path.length === 0) {
                         continue;
                     }
                     distance = path.length;
                 } else if (distanceType === TYPE_SHORTEST_PATH_IGNORE_PRIORITY) {
-                    let path = ai.pathFinding.findPathIgnorePriority(x, y, cell.x, cell.y);
+                    let path = pathFinding.findPathIgnorePriority(x, y, cell.x, cell.y);
                     if (path.length === 0) {
                         continue;
                     }
                     distance = path.length;
                 } else if (distanceType === TYPE_SHORTEST_PATH_INCLUDE_CITIES) {
-                    let path = ai.pathFinding.findPathIncludeCities(x, y, cell.x, cell.y);
+                    let path = pathFinding.findPathIncludeCities(x, y, cell.x, cell.y);
                     if (path.length === 0) {
                         continue;
                     }

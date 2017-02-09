@@ -1,13 +1,15 @@
 const io = require('socket.io-client');
 const State = require('./state');
 const PathFinding = require('./path-finding');
+const mp = require('../mp');
 const fs = require('fs');
 const extend = require('extend');
 const historyFile = __dirname + '/../data/history.json';
 const chance = new require('chance')();
+const atQuotes = require('at-quotes');
 
 module.exports = class Ai {
-    constructor(id, name, mode, stats) {
+    constructor(id, name, mode, stats, calculatePaths) {
         this.id = id;
         this.name = name;
         this.mode = mode;
@@ -19,9 +21,12 @@ module.exports = class Ai {
             defendDistance: 6,
             expandEveryNthTurns: 4,
             captureCityDistance: 4,
+            skipTurns: 6,
         }, stats);
 
         this.state = new State(this);
+        this.calculatePaths = calculatePaths;
+        this.calculatePathsPending = false;
     }
 
     joinMatch(match) {
@@ -86,20 +91,29 @@ module.exports = class Ai {
 
             this._socket.on('game_start', (data) => {
                 // Get ready to start playing the game.
-                this.playerIndex = data.playerIndex;
+                this.state.playerIndex = data.playerIndex;
                 this.state.replayUrl = 'http://bot.generals.io/replays/' + encodeURIComponent(data.replay_id);
                 this.state.usernames = data.usernames;
                 this.state.teams = data.teams;
-                this._socket.emit('chat_message', data.chat_room, 'Hi, I\'m ' + this.name + '. Nice to meet you!');
+                // this._socket.emit('chat_message', data.chat_room, 'Hi, I\'m ' + this.name + '. Nice to meet you!');
+                this._socket.emit('chat_message', data.chat_room, atQuotes.getQuote());
             });
 
             this._socket.on('game_update', (data) => {
                 let ms = new Date().getTime();
                 // this.log('Game update');
                 // Patch the city and map diffs into our local variables.
-                this.state.update(this, data);
-                this.pathFinding.update();
-                this.state.updatePriority(this);
+                this.state.update(data);
+                this.pathFinding.update(this.state);
+
+                if (!this.calculatePathsPending) {
+                    this.calculatePathsPending = true;
+                    mp.send(this.calculatePaths, this.state, (priorityMap) => {
+                        // console.log('Finished calculating paths', priorityMap)
+                        this.state.priorityMap = priorityMap;
+                        this.calculatePathsPending = false;
+                    });
+                }
 
                 if (require('./moves/finish-him')(this)) {
                     this.log('Finish him ' + (new Date().getTime() - ms) + 'ms');
@@ -109,7 +123,7 @@ module.exports = class Ai {
                     this.log('Defend base ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
-                if (require('./moves/skip')(this)) {
+                if (require('./moves/skip')(this, this.stats.skipTurns)) {
                     this.log('Skip ' + (new Date().getTime() - ms) + 'ms');
                     return;
                 }
@@ -118,7 +132,7 @@ module.exports = class Ai {
                     return;
                 }
                 if (this.state.turn % this.stats.expandEveryNthTurns === 0) {
-                    switch (chance.pickone(['combine-cluster', 'move-any-free-cell'])) {
+                    switch (chance.pickone(['combine-cluster', 'move-any-free-cell', 'move-towards-closest-empty-to-base'])) {
                         // case 'move-towards-base': {
                         //     if (require('./moves/move-towards-base')(this)) {
                         //         this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
@@ -128,7 +142,7 @@ module.exports = class Ai {
                         // }
                         case 'combine-cluster': {
                             if (require('./moves/combine-cluster')(this, this.stats.combineClusterFactor)) {
-                                this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
+                                this.log('Moved combine cluster ' + (new Date().getTime() - ms) + 'ms');
                                 return;
                             }
                             break;
@@ -136,6 +150,13 @@ module.exports = class Ai {
                         case 'move-any-free-cell': {
                             if (require('./moves/move-any-free-cell')(this)) {
                                 this.log('Moved any free cell ' + (new Date().getTime() - ms) + 'ms');
+                                return;
+                            }
+                            break;
+                        }
+                        case 'move-towards-closest-empty-to-base': {
+                            if (require('./moves/move-towards-closest-empty-to-base')(this)) {
+                                this.log('Moved closest empty to base ' + (new Date().getTime() - ms) + 'ms');
                                 return;
                             }
                             break;

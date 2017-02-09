@@ -1,5 +1,5 @@
 const State = require('./../state');
 
-module.exports = function(ai) {
-    return ai.state.turn < 10;
+module.exports = function(ai, turns = 10) {
+    return ai.state.turn < turns;
 }

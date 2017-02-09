@@ -5,13 +5,13 @@ module.exports = function(ai, defendDistance) {
     if (!ai.state.base) {
         return false;
     }
-    let [closestEnemy, closestEnemyDistance] = findClosest(ai, ai.state.base.x, ai.state.base.y, (cell) => {
-        return cell.terrain >= 0 && cell.terrain !== ai.playerIndex;
+    let [closestEnemy, closestEnemyDistance] = findClosest(ai.state, ai.pathFinding, ai.state.base.x, ai.state.base.y, (cell) => {
+        return cell.terrain >= 0 && cell.terrain !== ai.state.playerIndex;
     });
     if (closestEnemyDistance !== null && closestEnemyDistance <= defendDistance) {
         ai.debug('DEFEND ' + closestEnemyDistance + ' !!!!');
-        let [closestArmy, closestArmyDistance] = findClosest(ai, closestEnemy.x, closestEnemy.y, (cell) => {
-            return cell.terrain === ai.playerIndex && cell.armies > 2 && cell.armies > Math.ceil(closestEnemy.armies / 2);
+        let [closestArmy, closestArmyDistance] = findClosest(ai.state, ai.pathFinding, closestEnemy.x, closestEnemy.y, (cell) => {
+            return cell.terrain === ai.state.playerIndex && cell.armies > 2 && cell.armies > Math.ceil(closestEnemy.armies / 2);
         });
         if (closestArmy) {
             let path = ai.pathFinding.findPath(closestArmy.x, closestArmy.y, closestEnemy.x, closestEnemy.y);

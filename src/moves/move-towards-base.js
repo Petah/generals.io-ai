@@ -10,11 +10,11 @@ module.exports = function(ai) {
     if (!biggestArmy) {
         return false;
     }
-    let [closest, distance] = findClosest(ai, ai.state.base.x, ai.state.base.y, (cell) => {
+    let [closest, distance] = findClosest(ai.state, ai.pathFinding, ai.state.base.x, ai.state.base.y, (cell) => {
         if (cell.i == biggestArmy.i) {
             return false;
         }
-        if (cell.terrain === ai.playerIndex && cell.general === -1) {
+        if (cell.terrain === ai.state.playerIndex && cell.general === -1) {
             if (cell.armies > 10 && biggestArmy.armies > 20) {
                 return true;
             }

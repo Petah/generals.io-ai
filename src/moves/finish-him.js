@@ -7,7 +7,11 @@ module.exports = function(ai, factor) {
         for (let c = 0; c < ai.state.width; c++) {
             let cell = ai.state.rows[r][c];
 
-            if (cell.terrain >= 0 && cell.terrain !== ai.playerIndex && cell.wasGeneral) {
+            if (cell.terrain >= 0 && cell.terrain !== ai.state.playerIndex && cell.wasGeneral) {
+                // find closest
+                // check army is > general
+                // move towards
+
                 var up = ai.state.getCellUp(cell.i);
                 var down = ai.state.getCellDown(cell.i);
                 var left = ai.state.getCellLeft(cell.i);
@@ -20,7 +24,7 @@ module.exports = function(ai, factor) {
                         continue;
                     }
 
-                    if (directions[i].terrain === ai.playerIndex && directions[i].armies > cell.armies) {
+                    if (directions[i].terrain === ai.state.playerIndex && directions[i].armies > cell.armies) {
                         ai.log('Finish him ' + cell.x + ':' + cell.y + ' ' + cell.armies + ' with ' + directions[i].x + ':' + directions[i].y + ' ' + directions[i].armies);
                         ai._socket.emit('attack', directions[i].i, cell.i);
                         return true;

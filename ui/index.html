@@ -111,7 +111,16 @@
                 position: absolute;
                 top: 0;
                 right: 0;
-                background-color: rgba(128, 128, 128, 0.5);
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 10px;
+                max-width: 20vw;
+                overflow: auto;
+            }
+
+            .zx-overlay .zx-chat {
+                white-space: pre;
             }
         </style>
     </head>
@@ -251,13 +260,14 @@
                                     {{ col.wasCity ? 'C' : '' }}
                                     {{ col.armies > 0 ? col.armies : '' }}
                                     {{ col.notGeneral && col.terrain === -3 ? 'N' : '' }}
-                                    <span class="zx-small" ng-show="col.priority > 0">({{ col.priority * 100 | round }})</span>
+                                    {{ col.wasEnemy && col.terrain < 0 ? 'W' + col.wasEnemy.armies : '' }}
+                                    <span class="zx-small" ng-show="ai.priorityMap[col.y][col.x] > 0">({{ ai.priorityMap[col.y][col.x] * 100 | round }})</span>
                                     <span class="zx-small" ng-show="col.terrain >= 0 && col.cost > 0">{{ col.cost }}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="zx-overlay" ng-show="$parent.overlay">
-                            <div ng-repeat="message in ai.chat">{{ message[1].text }}</div>
+                            <div class="zx-chat" ng-repeat="message in ai.chat">{{ message[1].text }}</div>
                             <div><a href="{{ ai.replayUrl }}" target="_blank">Replay</a></div>
                             <div>Turn {{ ai.turn }}</div>
                             <div>Min {{ ai.minArmies }}</div>
@@ -300,7 +310,7 @@
                                         break;
                                     }
                                     case TILE_FOG: {
-                                        col.backgroundColor = tinycolor.mix('#aaa', '#e74c3c', col.priority * 100);
+                                        col.backgroundColor = tinycolor.mix('#aaa', '#e74c3c', ai.priorityMap[col.y][col.x] * 100);
                                         break;
                                     }
                                     case TILE_MOUNTAIN: {

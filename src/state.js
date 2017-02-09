@@ -1,11 +1,6 @@
 const patch = require('./patch');
 const findClosest = require('./moves/find-closest');
 
-const TILE_EMPTY = -1;
-const TILE_MOUNTAIN = -2;
-const TILE_FOG = -3;
-const TILE_FOG_OBSTACLE = -4;
-
 class State {
 
     constructor(ai) {
@@ -18,16 +13,16 @@ class State {
         this.rows = null;
         this.fogPriorityCalculated = false;
         this.stats = ai.stats;
+        this.priorityMap = null;
     }
 
-    update(ai, data) {
+    update(data) {
         this.scores = data.scores;
         this.stars = data.stars;
         this.turn = data.turn;
         this.cities = patch(this.cities, data.cities_diff);
         this.map = patch(this.map, data.map_diff);
         this.generals = data.generals;
-        this.playerIndex = ai.playerIndex;
 
         // The first two terms in |map| are the dimensions.
         this.width = this.map[0];
@@ -65,6 +60,7 @@ class State {
                         wasGeneral: false,
                         notGeneral: null,
                         wasCity: null,
+                        wasEnemy: null,
                         cost: 0,
                     });
                 }
@@ -77,7 +73,7 @@ class State {
                 let i = r * this.width + c;
 
                 let general = this.generals.indexOf(i);
-                if (this.terrain[i] !== ai.playerIndex) {
+                if (this.terrain[i] !== this.playerIndex) {
                     if (general !== -1) {
                         this.rows[r][c].wasGeneral = true;
                     }
@@ -102,17 +98,17 @@ class State {
                     this.rows[r][c].wasCity = true;
                 }
 
-                // Prioritise generals
-                if (this.rows[r][c].wasGeneral && this.rows[r][c].cities === -1) {
-                    this.rows[r][c].priority = 1;
-                } else if (this.rows[r][c].terrain === TILE_EMPTY) {
-                    this.rows[r][c].priority = 0;
-                } else if (this.rows[r][c].terrain === ai.playerIndex) {
-                    this.rows[r][c].priority = 0;
+                if (this.rows[r][c].terrain >= 0 && this.rows[r][c].terrain !== this.playerIndex) {
+                    this.rows[r][c].wasEnemy = {
+                        playerIndex: this.rows[r][c].terrain,
+                        armies: this.rows[r][c].armies,
+                    };
+                } else if (this.rows[r][c].terrain === TILE_EMPTY || this.rows[r][c].terrain === this.playerIndex) {
+                    this.rows[r][c].wasEnemy = null;
                 }
 
                 // Min/max armies
-                if (this.terrain[i] === ai.playerIndex) {
+                if (this.terrain[i] === this.playerIndex) {
                     this.minArmies = Math.min(this.minArmies, this.armies[i]);
                     this.maxArmies = Math.max(this.maxArmies, this.armies[i]);
                     if (this.armies[i] > 1) {
@@ -125,36 +121,7 @@ class State {
 
         this.averageArmies = this.totalArmies / this.armiesCount;
 
-        this.base = data.generals && data.generals.length && data.generals[ai.playerIndex] >= 0 ? this.getCell(data.generals[ai.playerIndex]) : null;
-    }
-
-    updatePriority(ai) {
-        // Calculate fog priority
-        // if (!this.fogPriorityCalculated || this.turn % 20 === 0) {
-        //     this.fogPriorityCalculated = true;
-            let r = this.turn % this.height;
-            // for (let r = 0; r < this.height; r++) {
-                for (let c = 0; c < this.width; c++) {
-                    if (this.rows[r][c].terrain === TILE_FOG) {
-                        let [closest, distance] = findClosest(ai, c, r, (cell) => {
-                            if (cell.terrain === TILE_EMPTY || cell.terrain >= 0) {
-                                return true;
-                            }
-                        }, findClosest.TYPE_SHORTEST_PATH_IGNORE_PRIORITY);
-                        if (closest) {
-                            if (closest.terrain >= 0 && closest.terrain !== ai.playerIndex) {
-                                this.rows[r][c].priority = Math.min(1, Math.abs((distance / (this.width + this.height))) * 2);
-                            } else {
-                                this.rows[r][c].priority = Math.abs((distance / (this.width + this.height)));
-                            }
-                            if (this.rows[r][c].notGeneral) {
-                                this.rows[r][c].priority /= 4;
-                            }
-                        }
-                    }
-                }
-            // }
-        // }
+        this.base = data.generals && data.generals.length && data.generals[this.playerIndex] >= 0 ? this.getCell(data.generals[this.playerIndex]) : null;
     }
 
     getCell(i) {

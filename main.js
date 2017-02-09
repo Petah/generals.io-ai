@@ -2,16 +2,18 @@ const Ai = require('./src/ai');
 const Match = require('./src/match');
 const fs = require('fs');
 const chance = new require('chance')();
-
-// const mode = 'private';
-// const mode = 'ffa';
-const mode = '1v1';
-// const mode = Math.random() < 0.3 ? 'ffa' : '1v1';
-
+const mp = require('./mp');
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+
+// const mode = 'private';
+const mode = 'ffa';
+// const mode = '1v1';
+// const mode = Math.random() < 0.3 ? 'ffa' : '1v1';
+// const aiCount = mode === 'private' ? 3 : 1;
+const aiCount = 2;
 
 app.use('/bower_components', express.static('bower_components'))
 
@@ -28,7 +30,6 @@ http.listen(8674, function() {
 });
 
 let match = new Match('daves_test_game');
-let aiCount = mode === 'private' ? 3 : 1;
 let ais = [];
 
 for (let i = 0; i < aiCount; i++) {
@@ -36,7 +37,9 @@ for (let i = 0; i < aiCount; i++) {
         defendDistance: chance.pickone([5, 10]),
         expandEveryNthTurns: chance.pickone([3, 6]),
         captureCityDistance: chance.pickone([3, 6]),
-    });
+    }, mp.fork({
+        worker: 'calculate-paths',
+    }));
     ai.joinMatch(match);
     ais.push(ai);
 }
@@ -51,6 +54,7 @@ setTimeout(() => {
 // rush base once found
 // chat random quotes
 // how many units can get where in how many steps
+// updaet finish him to check clost distance and if there is enough units in path
 
 setInterval(() => {
     // let data = JSON.stringify(ais.map(ai => ai.state), (key, value) => {

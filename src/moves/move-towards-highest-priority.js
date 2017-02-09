@@ -6,13 +6,14 @@ module.exports = function(ai) {
     let highestPriority = null;
     for (let r = 0; r < ai.state.height; r++) {
         for (let c = 0; c < ai.state.width; c++) {
-            if (ai.state.rows[r][c].priority) {
-                if (highestPriority === null || ai.state.rows[r][c].priority > highestPriority.priority) {
+            if (ai.state.priorityMap[r][c]) {
+                if (highestPriority === null || ai.state.priorityMap[r][c] > ai.state.priorityMap[highestPriority.y][highestPriority.x]) {
                     highestPriority =  ai.state.rows[r][c];
                 }
             }
         }
     }
+
     let biggestArmy = findBiggestArmy(ai, (cell) => {
         let path = ai.pathFinding.findPath(cell.x, cell.y, highestPriority.x, highestPriority.y);
         if (path.length === 2 && cell.armies < highestPriority.armies / 2) {
