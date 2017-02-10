@@ -4,7 +4,6 @@ const PathFinding = require('./path-finding');
 const mp = require('../mp');
 const fs = require('fs');
 const extend = require('extend');
-const historyFile = __dirname + '/../data/history.json';
 const chance = new require('chance')();
 const atQuotes = require('at-quotes');
 
@@ -27,6 +26,7 @@ module.exports = class Ai {
         this.state = new State(this);
         this.calculatePaths = calculatePaths;
         this.calculatePathsPending = false;
+        this.historyFile = __dirname + '/../data/history-' + this.mode + '.json';
     }
 
     joinMatch(match) {
@@ -84,6 +84,11 @@ module.exports = class Ai {
                     case 'ffa': {
                         this._socket.emit('play', this.id);
                         this.log('Joined FFA');
+                        break;
+                    }
+                    case '2v2': {
+                        this._socket.emit('join_team', 'ai_x', this.id);
+                        this.log('Joined 2v2');
                         break;
                     }
                 }
@@ -189,8 +194,8 @@ module.exports = class Ai {
 
             const writeHistory = (won) => {
                 try {
-                    this.log('Reading ' + historyFile);
-                    let history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
+                    this.log('Reading ' + this.historyFile);
+                    let history = JSON.parse(fs.readFileSync(this.historyFile, 'utf8'));
                     history.push({
                         date: new Date().getTime(),
                         won: won,
@@ -204,8 +209,8 @@ module.exports = class Ai {
                             return score;
                         }),
                     });
-                    this.log('Writing ' + historyFile);
-                    fs.writeFileSync(historyFile, JSON.stringify(history, null, 4));
+                    this.log('Writing ' + this.historyFile);
+                    fs.writeFileSync(this.historyFile, JSON.stringify(history, null, 4));
                 } catch (error) {
                     console.log(error);
                 }
