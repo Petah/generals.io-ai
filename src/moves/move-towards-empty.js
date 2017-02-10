@@ -8,7 +8,7 @@ module.exports = function(ai) {
         return false;
     }
     let [closest, distance] = findClosest(ai.state, ai.pathFinding, biggestArmy.x, biggestArmy.y, (cell) => {
-        return cell.terrain === State.TILE_EMPTY && cell.armies === 0;
+        return cell.terrain === TILE_EMPTY && cell.armies === 0;
     });
     if (closest) {
         let path = ai.pathFinding.findPath(biggestArmy.x, biggestArmy.y, closest.x, closest.y);

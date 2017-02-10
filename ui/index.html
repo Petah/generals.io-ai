@@ -63,6 +63,7 @@
 
             .zx-cell-text {
                 overflow: hidden;
+                line-height: 1;
             }
 
             .zx-small {
@@ -261,8 +262,8 @@
                                     {{ col.armies > 0 ? col.armies : '' }}
                                     {{ col.notGeneral && col.terrain === -3 ? 'N' : '' }}
                                     {{ col.wasEnemy && col.terrain < 0 ? 'W' + col.wasEnemy.armies : '' }}
-                                    <span class="zx-small" ng-show="ai.priorityMap[col.y][col.x] > 0">({{ ai.priorityMap[col.y][col.x] * 100 | round }})</span>
-                                    <span class="zx-small" ng-show="col.terrain >= 0 && col.cost > 0">{{ col.cost }}</span>
+                                    <span class="zx-small" ng-show="ai.priorityMap[col.y][col.x] > 0">p{{ ai.priorityMap[col.y][col.x] * 100 | round }}</span>
+                                    <span class="zx-small" ng-show="col.cost > 0">c{{ col.cost }}</span>
                                 </div>
                             </div>
                         </div>

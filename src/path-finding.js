@@ -31,11 +31,11 @@ class PathFinding {
             costs[r] = [];
             for (let c = 0; c < state.width; c++) {
                 let col = state.rows[r][c];
-                if (col.terrain === State.TILE_MOUNTAIN) {
+                if (col.terrain === TILE_MOUNTAIN) {
                     matrix[r][c] = BLOCKED;
                     matrixIncludeCities[r][c] = BLOCKED;
                     costs[r][c] = 0;
-                } else if (col.terrain === State.TILE_FOG_OBSTACLE) {
+                } else if (col.terrain === TILE_FOG_OBSTACLE) {
                     matrix[r][c] = BLOCKED;
                     matrixIncludeCities[r][c] = BLOCKED;
                     costs[r][c] = 0;
@@ -58,6 +58,8 @@ class PathFinding {
                         costs[r][c] = Math.max(0, costs[r][c] - col.armies + 1);
                     } else if (col.wasEnemy) {
                         costs[r][c] += col.wasEnemy.armies;
+                    } else {
+                        costs[r][c] -= 1;
                     }
                     state.rows[r][c].cost = costs[r][c];
                 }

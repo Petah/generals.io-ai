@@ -1,5 +1,10 @@
-const State = require('./../state');
+module.exports = class {
+    constructor(turns) {
+        this.name = 'Skip';
+        this.turns = turns;
+    }
 
-module.exports = function(ai, turns = 10) {
-    return ai.state.turn < turns;
-}
+    process(ai) {
+        return ai.state.turn < this.turns;
+    }
+};

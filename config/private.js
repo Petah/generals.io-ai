@@ -1,7 +1,7 @@
 const chance = new require('chance')();
 
 module.exports = {
-    mode: '1v1',
-    aiCount: 1,
-    port: 8675,
+    mode: 'private',
+    aiCount: 2,
+    port: 8676,
 };

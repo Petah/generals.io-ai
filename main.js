@@ -9,12 +9,18 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-let config = require('./config/' + process.argv[2]);
+const configName = process.argv[2];
+let config = require('./config/' + configName);
 config = extend({
     aiCount: 1,
     mode: '1v1',
     port: 8674,
+    name: 'ai_',
+    strategy: [],
+    historyFile: __dirname + '/../data/history-' + configName + '.json'
 }, config);
+
+console.log(config);
 
 // const mode = 'private';
 // const mode = 'ffa';
@@ -44,11 +50,7 @@ let match = new Match('daves_test_game');
 let ais = [];
 
 for (let i = 0; i < config.aiCount; i++) {
-    let ai = new Ai('daves_test_bot_' + i, 'ai_' + i, config.mode, {
-        defendDistance: chance.pickone([5, 10]),
-        expandEveryNthTurns: chance.pickone([3, 6]),
-        captureCityDistance: chance.pickone([3, 6]),
-    }, mp.fork({
+    let ai = new Ai('daves_test_bot_' + i, config.name + i, config.mode, config.strategy, config.historyFile, mp.fork({
         worker: 'calculate-paths',
     }));
     ai.joinMatch(match);
@@ -61,12 +63,10 @@ setTimeout(() => {
     }
 }, 2000);
 
-// remember ghosts
-// rush base once found
-// chat random quotes
 // how many units can get where in how many steps
 // updaet finish him to check clost distance and if there is enough units in path
 // 2v2
+// flood fill if stalemate
 
 setInterval(() => {
     io.emit('data', ais.map(ai => ai.state));

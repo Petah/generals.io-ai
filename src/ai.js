@@ -8,25 +8,18 @@ const chance = new require('chance')();
 const atQuotes = require('at-quotes');
 
 module.exports = class Ai {
-    constructor(id, name, mode, stats, calculatePaths) {
+    constructor(id, name, mode, strategy, historyFile, calculatePaths) {
         this.id = id;
         this.name = name;
         this.mode = mode;
         this.playerIndex = null;
         this.pathFinding = new PathFinding(this);
         this.finished = false;
-
-        this.stats = extend({
-            defendDistance: 6,
-            expandEveryNthTurns: 4,
-            captureCityDistance: 4,
-            skipTurns: 6,
-        }, stats);
-
+        this.strategy = strategy;
         this.state = new State(this);
         this.calculatePaths = calculatePaths;
         this.calculatePathsPending = false;
-        this.historyFile = __dirname + '/../data/history-' + this.mode + '.json';
+        this.historyFile = historyFile;
     }
 
     joinMatch(match) {
@@ -99,6 +92,7 @@ module.exports = class Ai {
                 this.state.playerIndex = data.playerIndex;
                 this.state.replayUrl = 'http://bot.generals.io/replays/' + encodeURIComponent(data.replay_id);
                 this.state.usernames = data.usernames;
+                this.log(this.state.usernames);
                 this.state.teams = data.teams;
                 // this._socket.emit('chat_message', data.chat_room, 'Hi, I\'m ' + this.name + '. Nice to meet you!');
                 this._socket.emit('chat_message', data.chat_room, atQuotes.getQuote());
@@ -120,70 +114,12 @@ module.exports = class Ai {
                     });
                 }
 
-                if (require('./moves/finish-him')(this)) {
-                    this.log('Finish him ' + (new Date().getTime() - ms) + 'ms');
-                    return;
-                }
-                if (require('./moves/defend-base')(this, this.stats.defendDistance)) {
-                    this.log('Defend base ' + (new Date().getTime() - ms) + 'ms');
-                    return;
-                }
-                if (require('./moves/skip')(this, this.stats.skipTurns)) {
-                    this.log('Skip ' + (new Date().getTime() - ms) + 'ms');
-                    return;
-                }
-                if (require('./moves/move-towards-city')(this, this.stats.captureCityDistance)) {
-                    this.log('Moved towards city ' + (new Date().getTime() - ms) + 'ms');
-                    return;
-                }
-                if (this.state.turn % this.stats.expandEveryNthTurns === 0) {
-                    switch (chance.pickone(['combine-cluster', 'move-any-free-cell', 'move-towards-closest-empty-to-base'])) {
-                        // case 'move-towards-base': {
-                        //     if (require('./moves/move-towards-base')(this)) {
-                        //         this.log('Moved towards base ' + (new Date().getTime() - ms) + 'ms');
-                        //         return;
-                        //     }
-                        //     break;
-                        // }
-                        case 'combine-cluster': {
-                            if (require('./moves/combine-cluster')(this, this.stats.combineClusterFactor)) {
-                                this.log('Moved combine cluster ' + (new Date().getTime() - ms) + 'ms');
-                                return;
-                            }
-                            break;
-                        }
-                        case 'move-any-free-cell': {
-                            if (require('./moves/move-any-free-cell')(this)) {
-                                this.log('Moved any free cell ' + (new Date().getTime() - ms) + 'ms');
-                                return;
-                            }
-                            break;
-                        }
-                        case 'move-towards-closest-empty-to-base': {
-                            if (require('./moves/move-towards-closest-empty-to-base')(this)) {
-                                this.log('Moved closest empty to base ' + (new Date().getTime() - ms) + 'ms');
-                                return;
-                            }
-                            break;
-                        }
+                for (let i = 0; i < this.strategy.length; i++) {
+                    if (this.strategy[i].process(this)) {
+                        this.log(this.strategy[i].name + ' ' + (new Date().getTime() - ms) + 'ms');
+                        return;
                     }
                 }
-                // if (require('./moves/move-towards-enemy')(this)) {
-                //     this.log('Moved towards enemy ' + (new Date().getTime() - ms) + 'ms');
-                //     return;
-                // }
-                if (require('./moves/move-towards-highest-priority')(this)) {
-                    this.log('Moved towards highest priority ' + (new Date().getTime() - ms) + 'ms');
-                    return;
-                }
-                // if (require('./moves/move-towards-empty')(this)) {
-                //     this.log('Moved towards empty ' + (new Date().getTime() - ms) + 'ms');
-                //     return;
-                // }
-                // if (require('./moves/move-biggest-randomly')(this)) {
-                //     this.log('Moved biggest randomly ' + (new Date().getTime() - ms) + 'ms');
-                //     return;
-                // }
 
                 this.log('No move found ' + (new Date().getTime() - ms) + 'ms');
             });
@@ -195,7 +131,13 @@ module.exports = class Ai {
             const writeHistory = (won) => {
                 try {
                     this.log('Reading ' + this.historyFile);
-                    let history = JSON.parse(fs.readFileSync(this.historyFile, 'utf8'));
+                    let history;
+                    try {
+                        history = JSON.parse(fs.readFileSync(this.historyFile, 'utf8'));
+                    } catch (e) {
+                        // Ignore missing file
+                        history = [];
+                    }
                     history.push({
                         date: new Date().getTime(),
                         won: won,
