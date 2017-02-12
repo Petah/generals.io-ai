@@ -1,0 +1,269 @@
+<!doctype html>
+<html ng-app="App">
+    <head>
+        <title>basic</title>
+        <script src="../bower_components/tinycolor/tinycolor.js"></script>
+        <style>
+            * {
+
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                display: flex;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                font-family: monospace;
+            }
+
+            body {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .zx-toolbar {
+                text-align: center;
+            }
+
+            .zx-grid {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+            }
+
+            .zx-grid-row {
+                display: flex;
+                flex: 1;
+            }
+
+            .zx-ai {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                border: 1px solid #ddd;
+                position: relative;
+            }
+
+            .zx-row {
+                display: flex;
+                flex: 1;
+            }
+
+            .zx-cell {
+                flex: 1;
+                display: flex;
+                justify-content: center;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .zx-cell-text {
+                overflow: hidden;
+                line-height: 1;
+            }
+
+            .zx-cell-small-text {
+                font-size: 8px;
+            }
+
+            .zx-cell-empty {
+                background-color: #fff;
+            }
+
+            .zx-cell-mountain {
+                background-color: #333;
+            }
+
+            .zx-cell-fog {
+                background-color: #aaa;
+            }
+
+            .zx-cell-fog-obstacle {
+                background-color: #999;
+            }
+
+            .zx-cell-city {
+                background-color: #8e44ad;
+                box-shadow: inset 0px 0px 0px 3px #8e44ad;
+            }
+
+            .zx-cell-color-0 {
+                box-shadow: inset 0px 0px 0px 1px #1abc9c;
+            }
+
+            .zx-cell-color-1 {
+                box-shadow: inset 0px 0px 0px 1px #3498db;
+            }
+
+            .zx-cell-color-2 {
+                box-shadow: inset 0px 0px 0px 1px #f1c40f;
+            }
+
+            .zx-cell-general {
+                text-decoration: underline;
+                box-shadow: inset 0px 0px 0px 3px #2c3e50;
+            }
+
+            .zx-overlay {
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 10px;
+                max-width: 20vw;
+                overflow: auto;
+            }
+
+            .zx-overlay .zx-chat {
+                white-space: pre;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="/socket.io/socket.io.js"></script>
+        <div class="zx-grid" ng-if="ais.length == 1">
+            <div id="zx-container" class="zx-grid-row"></div>
+            <div class="zx-grid-row"></div>
+        </div>
+        <script>
+            const TILE_EMPTY = -1;
+            const TILE_MOUNTAIN = -2;
+            const TILE_FOG = -3;
+            const TILE_FOG_OBSTACLE = -4;
+
+            const grids = {};
+            const container = document.getElementById('zx-container');
+
+            const colors = [
+                '#1abc9c',
+                '#3498db',
+                '#f1c40f',
+                '#8e44ad',
+                '#00ff00',
+                '#0000ff',
+            ];
+
+            const alphaColor = (hex, alpha) => {
+                let color = tinycolor(hex).toRgb();
+                return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+            }
+            let i = 0;
+
+            const getColor = (ai, col) => {
+                if (!col.backgroundColor) {
+                    switch (col.terrain) {
+                        case TILE_FOG_OBSTACLE: {
+                            col.backgroundColor = '#999';
+                            break;
+                        }
+                        case TILE_FOG: {
+                            col.backgroundColor = tinycolor.mix('#aaa', '#e74c3c', ai.priorityMap[col.y][col.x] * 100);
+                            break;
+                        }
+                        case TILE_MOUNTAIN: {
+                            col.backgroundColor = '#444';
+                            break;
+                        }
+                        case TILE_EMPTY: {
+                            col.backgroundColor = '#fff';
+                            break;
+                        }
+                        default: {
+                            let hex = colors[col.terrain];
+                            let alpha = col.armies / ai.maxArmies;
+                            col.backgroundColor = alphaColor(hex, alpha);
+                            break;
+                        }
+                    }
+                }
+                return col.backgroundColor;
+            };
+
+            const socket = io();
+            socket.on('data', function(data) {
+                if (!document.hasFocus()) {
+                    return;
+                }
+                console.log('Data');
+                for (let i = 0; i < data.length; i++) {
+                    let ai = data[i];
+                    if (!ai.width || !ai.height) {
+                        continue;
+                    }
+                    if (!grids[ai.id]) {
+                        console.log('Creating grid', ai.id);
+                        console.log('Width', ai.width);
+                        console.log('Height', ai.height);
+                        grids[ai.id] = document.createElement('div');
+                        grids[ai.id].classList.add('zx-ai');
+                        for (let y = 0; y < ai.height; y++) {
+                            let row = document.createElement('div');
+                            row.classList.add('zx-row');
+                            for (let x = 0; x < ai.width; x++) {
+                                let text = document.createElement('div');
+                                text.classList.add('zx-cell-text');
+
+                                let smallText = document.createElement('div');
+                                smallText.classList.add('zx-cell-small-text');
+
+                                let cell = document.createElement('div');
+                                cell.classList.add('zx-cell');
+                                cell.appendChild(text);
+                                cell.appendChild(smallText);
+                                row.appendChild(cell);
+                            }
+                            grids[ai.id].appendChild(row);
+                        }
+                        container.appendChild(grids[ai.id]);
+                    }
+
+                    for (let y = 0; y < ai.height; y++) {
+                        for (let x = 0; x < ai.width; x++) {
+                            let dom = grids[ai.id].children[y].children[x];
+                            let cell = ai.rows[y][x];
+                            let text = '';
+                            if (cell.general >= 0 || cell.wasGeneral > 0) {
+                                text += 'G';
+                            } else if (cell.wasCity > 0) {
+                                text += 'C';
+                            }
+                            if (cell.armies > 0) {
+                                text += cell.armies;
+                            } else if (cell.wasEnemy) {
+                                text += cell.wasEnemy.armies;
+                            }
+                            dom.children[0].innerHTML = text;
+
+                            let smallText = '';
+                            if (Math.round(ai.priorityMap[y][x] * 100) > 0) {
+                                smallText += 'p' + Math.round(ai.priorityMap[y][x] * 100) + ' ';
+                            }
+                            if (cell.cost > 0) {
+                                smallText += 'c' + cell.cost + ' ';
+                            }
+                            dom.children[1].innerHTML = smallText;
+
+                            dom.classList.toggle('zx-cell-empty', cell.terrain === TILE_EMPTY)
+                            dom.classList.toggle('zx-cell-mountain', cell.terrain === TILE_MOUNTAIN)
+                            dom.classList.toggle('zx-cell-fog', cell.terrain === TILE_FOG)
+                            dom.classList.toggle('zx-cell-fog-obstacle', cell.terrain === TILE_FOG_OBSTACLE)
+                            dom.classList.toggle('zx-cell-city', cell.wasCity ? true : false)
+                            dom.classList.toggle('zx-cell-general', cell.wasGeneral ? true : false)
+                            dom.classList.toggle('zx-cell-color-0', cell.terrain === 0)
+                            dom.classList.toggle('zx-cell-color-1', cell.terrain === 1)
+                            dom.classList.toggle('zx-cell-color-2', cell.terrain === 2)
+                            dom.classList.toggle('zx-cell-color-3', cell.terrain === 3)
+                            
+                            dom.style.backgroundColor = getColor(ai, cell);
+                        }
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>

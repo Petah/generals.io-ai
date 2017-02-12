@@ -19,8 +19,12 @@ console.log(config);
 
 app.use('/bower_components', express.static('bower_components'))
 
-app.get('/', function(req, res) {
-    res.sendFile(__dirname + '/ui/index.html');
+app.get('/angular', function(req, res) {
+    res.sendFile(__dirname + '/ui/angular.html');
+});
+
+app.get('/basic', function(req, res) {
+    res.sendFile(__dirname + '/ui/basic.html');
 });
 
 io.on('connection', function(socket){

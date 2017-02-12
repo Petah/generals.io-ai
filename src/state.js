@@ -4,6 +4,7 @@ const findClosest = require('./moves/find-closest');
 class State {
 
     constructor(ai) {
+        this.id = '1' + Math.random().toString().replace('0.', '');
         this.turn = 0;
         this.generals = null;
         this.cities = [];
