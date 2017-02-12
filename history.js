@@ -13,7 +13,8 @@ const sort = (obj) => {
     return Object.values(obj).sort((a, b) => (a.wins / (a.wins + a.loses)) - (b.wins / (b.wins + b.loses)));
 }
 
-let history = JSON.parse(fs.readFileSync(__dirname + '/data/history.json', 'utf8'));
+let history = JSON.parse(fs.readFileSync(__dirname + '/data/history-1v1.json', 'utf8'));
+// let history = JSON.parse(fs.readFileSync(__dirname + '/data/history-ffa.json', 'utf8'));
 output(
     'FFA',
     history.reduce((p, c) => p + (c.won && c.mode === 'ffa' ? 1 : 0), 0),
@@ -31,12 +32,13 @@ for (let i = 0; i < history.length; i++) {
     if (!history[i].stats) {
         continue;
     }
-    let key = JSON.stringify(history[i].stats);
+    // let key = JSON.stringify(history[i].stats);
+    let key = history[i].stats.defendDistance;
     if (!statCounts[key]) {
         statCounts[key] = {
             wins: 0,
             loses: 0,
-            stats: history[i].stats,
+            stats: key,
         };
     }
     if (history[i].won) {
@@ -56,33 +58,33 @@ for (let i = 0; i < statCounts.length; i++) {
     );
 }
 
-let playerCounts = {};
-for (let i = 0; i < history.length; i++) {
-    if (!history[i].stats) {
-        continue;
-    }
-    let key = JSON.stringify(history[i].scores.map(score => score.name).sort());
-    if (!playerCounts[key]) {
-        playerCounts[key] = {
-            key: key,
-            wins: 0,
-            loses: 0,
-            stats: history[i].scores,
-        };
-    }
-    if (history[i].won) {
-        playerCounts[key].wins++;
-    } else {
-        playerCounts[key].loses++;
-    }
-}
+// let playerCounts = {};
+// for (let i = 0; i < history.length; i++) {
+//     if (!history[i].stats) {
+//         continue;
+//     }
+//     let key = JSON.stringify(history[i].scores.map(score => score.name).sort());
+//     if (!playerCounts[key]) {
+//         playerCounts[key] = {
+//             key: key,
+//             wins: 0,
+//             loses: 0,
+//             stats: history[i].scores,
+//         };
+//     }
+//     if (history[i].won) {
+//         playerCounts[key].wins++;
+//     } else {
+//         playerCounts[key].loses++;
+//     }
+// }
 
-playerCounts = sort(playerCounts);
+// playerCounts = sort(playerCounts);
 
-for (let i = 0; i < playerCounts.length; i++) {
-    output(
-        playerCounts[i].key,
-        playerCounts[i].wins,
-        playerCounts[i].loses
-    );
-}
+// for (let i = 0; i < playerCounts.length; i++) {
+//     output(
+//         playerCounts[i].key,
+//         playerCounts[i].wins,
+//         playerCounts[i].loses
+//     );
+// }

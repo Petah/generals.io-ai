@@ -15,7 +15,7 @@ module.exports = class {
         let [closest, distance] = findClosest(ai.state, ai.pathFinding, biggestArmy.x, biggestArmy.y, (cell) => {
             return cell.wasCity && cell.terrain !== ai.state.playerIndex && biggestArmy.armies > cell.armies + 1;
         }, findClosest.TYPE_SHORTEST_PATH_INCLUDE_CITIES);
-        if (closest && distance <= captureDistance) {
+        if (closest && distance <= this.captureDistance) {
             let path = ai.pathFinding.findPathIncludeCities(biggestArmy.x, biggestArmy.y, closest.x, closest.y);
             if (path.length > 1) {
                 ai.debug('Move towards city ' + biggestArmy.x + ' ' + biggestArmy.y + ' ' + closest.x + ' ' + closest.y + ' ' + path[1][0] + ' ' + path[1][1]);

@@ -143,9 +143,10 @@ module.exports = class Ai {
                         won: won,
                         turns: this.state.turn,
                         mode: this.mode,
+                        playerIndex: this.state.playerIndex,
                         name: this.name,
                         replayUrl: this.state.replayUrl,
-                        stats: this.stats,
+                        strategy: this.strategy,
                         scores: this.state.scores.map((score) => {
                             score.name = this.state.usernames[score.i];
                             return score;

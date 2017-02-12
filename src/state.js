@@ -47,11 +47,13 @@ class State {
 
         if (this.rows === null) {
             this.rows = [];
+            this.priorityMap = [];
             for (let r = 0; r < this.height; r++) {
-                var row = [];
+                this.rows[r] = [];
+                this.priorityMap[r] = [];
                 for (let c = 0; c < this.width; c++) {
                     let i = r * this.width + c;
-                    row.push({
+                    this.rows[r][c] = {
                         i: i,
                         x: c,
                         y: r,
@@ -62,9 +64,9 @@ class State {
                         wasCity: null,
                         wasEnemy: null,
                         cost: 0,
-                    });
+                    };
+                    this.priorityMap[r][c] = 0;
                 }
-                this.rows.push(row);
             }
         }
 

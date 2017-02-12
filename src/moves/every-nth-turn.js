@@ -1,12 +1,12 @@
 module.exports = class {
-    constructor(n, subStrategy) {
-        this.name = 'Every nth turn: ' + n;
-        this.n = n;
+    constructor(numTurns, subStrategy) {
+        this.name = 'Every nth turn: ' + numTurns;
+        this.numTurns = numTurns;
         this.subStrategy = subStrategy;
     }
 
     process(ai) {
-        if (ai.state.turn % this.n === 0) {
+        if (ai.state.turn % this.numTurns === 0) {
             return this.subStrategy.process(ai);
         }
         return false;

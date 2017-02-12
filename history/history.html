@@ -1,0 +1,55 @@
+<!doctype html>
+<html ng-app="App">
+    <head>
+        <title>ai_0</title>
+        <script src="../bower_components/tinycolor/tinycolor.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.js"></script>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                display: flex;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                font-family: monospace;
+            }
+
+            body {
+                display: flex;
+                flex-direction: column;
+            }
+        </style>
+    </head>
+    <body ng-controller="AppController" ng-cloak>
+        <div>{{ file }}</div>
+        <div>Won {{ won }} {{ won / (won + lost) * 100 | round }}%</div>
+        <div>Lost {{ lost }} {{ lost / (won + lost) * 100 | round }}%</div>
+        <div>Total {{ won + lost }}</div>
+        <div ng-repeat="player in players">{{ player }}</div>
+        <script>
+            const app = angular.module('App', []);
+            app.filter('round', function() {
+                return function(value) {
+                    return Math.round(value);
+                };
+            });
+
+            app.controller('AppController', function($scope, $http, $interval) {
+                // $scope.file = 'history-1v1-0';
+                // $scope.file = 'history-ffa-0';
+                $scope.file = 'history-ffa-1';
+                $http.get('../data/' + $scope.file + '.json').success((history) => {
+                    $scope.won = history.reduce((sum, match) => match.won ? sum + 1 : sum, 0);
+                    $scope.lost = history.reduce((sum, match) => match.won ? sum : sum + 1, 0);
+                    $scope.players = history.reduce((concat, match) => concat.concat(match.scores.map(score => score.name)), []).filter((v, i, a) => a.indexOf(v) === i);
+                    console.log($scope.players);
+                });
+            });
+        </script>
+    </body>
+</html>

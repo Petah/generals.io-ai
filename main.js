@@ -12,25 +12,10 @@ const io = require('socket.io')(http);
 const configName = process.argv[2];
 let config = require('./config/' + configName);
 config = extend({
-    aiCount: 1,
-    mode: '1v1',
     port: 8674,
-    name: 'ai_',
-    strategy: [],
-    historyFile: __dirname + '/../data/history-' + configName + '.json'
+    ais: [],
 }, config);
-
 console.log(config);
-
-// const mode = 'private';
-// const mode = 'ffa';
-// const mode = '2v2';
-// const mode = '1v1';
-// const mode = Math.random() < 0.3 ? 'ffa' : '1v1';
-// const aiCount = mode === 'private' ? 3 : 1;
-// const aiCount = 2;
-
-const aiCount = process.argv[3];
 
 app.use('/bower_components', express.static('bower_components'))
 
@@ -49,8 +34,8 @@ http.listen(config.port, function() {
 let match = new Match('daves_test_game');
 let ais = [];
 
-for (let i = 0; i < config.aiCount; i++) {
-    let ai = new Ai('daves_test_bot_' + i, config.name + i, config.mode, config.strategy, config.historyFile, mp.fork({
+for (let i = 0; i < config.ais.length; i++) {
+    let ai = new Ai('daves_test_bot_' + i, config.ais[i].name, config.ais[i].mode, config.ais[i].strategy, __dirname + '/data/history-' + configName + '-' + i + '.json', mp.fork({
         worker: 'calculate-paths',
     }));
     ai.joinMatch(match);
@@ -58,7 +43,7 @@ for (let i = 0; i < config.aiCount; i++) {
 }
 
 setTimeout(() => {
-    for (let i = 0; i < config.aiCount; i++) {
+    for (let i = 0; i < ais.length; i++) {
         ais[i].forceStart(match);
     }
 }, 2000);
@@ -67,6 +52,8 @@ setTimeout(() => {
 // updaet finish him to check clost distance and if there is enough units in path
 // 2v2
 // flood fill if stalemate
+// combine if biggest stack next to another stack that is > averge
+// 2 squads, one defends, one epxands to get free cells
 
 setInterval(() => {
     io.emit('data', ais.map(ai => ai.state));
